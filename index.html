@@ -1,0 +1,1443 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141c3a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pokéhub">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Pokéhub</title>
+<style>
+:root {
+  --bg: #eef1f7; --surface: #ffffff; --surface-2: #e5e9f3; --text: #141c3a; --muted: #566082; --border: #d2d9ea;
+  --navy: #141c3a; --accent: #e5383b; --accent-text: #ffffff;
+  --sel-bg: #141c3a; --sel-text: #ffffff;
+  --gold: #b27a00; --gold-bg: #ffc531; --gold-text: #3a2900; --gold-soft: #fff1c9;
+  --ok: #178a5f; --ok-soft: #d9f4e8; --miss: #c2272b; --miss-soft: #fde3e3;
+  --sil: brightness(0) opacity(.3);
+  --shadow: 0 8px 24px rgba(20, 28, 58, .13);
+  --top-h: 58px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d1430; --surface: #162047; --surface-2: #1f2b5c; --text: #e9edfb; --muted: #9aa6cf; --border: #2d3a73;
+    --sel-bg: #e9edfb; --sel-text: #0d1430;
+    --gold: #ffc531; --gold-soft: #3b3010;
+    --ok: #4cd6a0; --ok-soft: #123a34; --miss: #ff8a8d; --miss-soft: #43202f;
+    --sil: brightness(0) invert(1) opacity(.2);
+    --shadow: 0 8px 24px rgba(0, 0, 0, .45);
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--text); font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Avenir Next", "Segoe UI", system-ui, sans-serif; line-height: 1.45; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--gold-bg); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.skip { position: absolute; left: -999px; } .skip:focus { left: 8px; top: 8px; z-index: 99; background: #fff; color: #000; padding: 8px 12px; }
+h1, h2, h3, h4, p { margin: 0; }
+
+/* ---------- Barre du haut et onglets ---------- */
+.top { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 18px; min-height: var(--top-h); padding: env(safe-area-inset-top) 18px 0; background: var(--navy); color: #fff; border-bottom: 3px solid var(--accent); }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.2rem; letter-spacing: -.01em; }
+.ball { width: 26px; height: 26px; border-radius: 50%; background: linear-gradient(#e5383b 0 46%, #fff 46% 54%, #f4f6fb 54%); border: 2.5px solid #fff; position: relative; flex: none; }
+.ball::after { content: ""; position: absolute; inset: 50% auto auto 50%; width: 8px; height: 8px; transform: translate(-50%, -50%); border-radius: 50%; background: var(--gold-bg); border: 2px solid var(--navy); }
+.tabs { display: flex; gap: 4px; margin-left: 8px; }
+.tabs button { display: flex; align-items: center; gap: 8px; background: none; border: 0; color: rgba(255, 255, 255, .78); padding: 10px 14px; border-radius: 10px; font-weight: 700; }
+.tabs button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.tabs button:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.tabs button[aria-selected="true"] { color: #fff; background: rgba(255, 255, 255, .16); box-shadow: inset 0 -3px 0 var(--gold-bg); }
+.pills { margin-left: auto; display: flex; gap: 8px; }
+.pill { background: rgba(255, 255, 255, .14); color: #fff; border-radius: 999px; padding: 4px 12px; font-weight: 800; font-variant-numeric: tabular-nums; font-size: .92rem; }
+.pill.gold { background: var(--gold-bg); color: var(--gold-text); }
+@media (max-width: 720px) {
+  .top { gap: 10px; padding-left: 14px; padding-right: 14px; }
+  .tabs { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; gap: 0; background: var(--navy); border-top: 1px solid rgba(255, 255, 255, .15); padding: 4px 6px calc(4px + env(safe-area-inset-bottom)); }
+  .tabs button { flex: 1; flex-direction: column; gap: 2px; padding: 7px 4px; font-size: .74rem; border-radius: 10px; }
+  .tabs button[aria-selected="true"] { box-shadow: inset 0 3px 0 var(--gold-bg); }
+  main { padding-bottom: 76px; }
+}
+
+/* ---------- Structure commune ---------- */
+.view { max-width: 1120px; margin: 0 auto; padding: 20px 16px 48px; }
+.view-head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px 20px; margin-bottom: 14px; }
+.bignum { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; }
+.bignum strong { font-size: clamp(2.2rem, 7vw, 3.4rem); line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.bignum span { color: var(--muted); font-weight: 600; }
+.head-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+.panel h2 { font-size: 1.05rem; font-weight: 800; margin-bottom: 12px; }
+.hint { color: var(--muted); font-size: .86rem; margin-top: 6px; }
+.empty { color: var(--muted); padding: 28px 8px; text-align: center; }
+.btn-primary { background: var(--accent); color: var(--accent-text); border: 0; border-radius: 12px; padding: 10px 18px; font-weight: 800; min-height: 42px; }
+.btn-primary:hover { filter: brightness(1.08); }
+.btn-ghost { border: 1.5px solid var(--border); background: var(--surface); border-radius: 10px; padding: 8px 14px; font-weight: 700; min-height: 40px; }
+.btn-ghost:hover:not(:disabled) { border-color: var(--text); }
+.btn-ghost:disabled { opacity: .5; cursor: not-allowed; }
+.btn-ghost.danger { color: var(--miss); }
+.link-btn { background: none; border: 0; padding: 4px 2px; color: var(--text); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.link-btn:disabled { color: var(--muted); text-decoration: none; cursor: default; }
+.check { display: inline-flex; align-items: center; gap: 8px; font-size: .95rem; cursor: pointer; user-select: none; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.seg { display: inline-flex; border: 1.5px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); max-width: 100%; }
+.seg button { border: 0; background: none; padding: 8px 14px; min-height: 40px; font-weight: 700; font-size: .9rem; }
+.seg button + button { border-left: 1.5px solid var(--border); }
+.seg button[aria-pressed="true"] { background: var(--sel-bg); color: var(--sel-text); }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0 6px; }
+.toolbar input[type="search"], .toolbar select, .jtop input, .jgrid input, #dtCodeIn, #dtCodeOut, #huntGame { min-height: 40px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); }
+.toolbar input[type="search"] { flex: 1 1 200px; }
+.bar { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 10px; }
+.bar > i { display: block; height: 100%; width: 0; background: var(--gold-bg); border-radius: 999px; transition: width .35s; }
+.bar.big { height: 14px; } .bar.big > i { background: var(--ok); }
+.spr { display: inline-block; flex: none; background-repeat: no-repeat; }
+.badge { padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 800; }
+.chipst { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; background: var(--surface-2); color: var(--muted); }
+.chipst.ok { background: var(--ok-soft); color: var(--ok); } .chipst.miss { background: var(--miss-soft); color: var(--miss); } .chipst.gold { background: var(--gold-soft); color: var(--gold); }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60; display: flex; align-items: center; gap: 14px; max-width: calc(100vw - 24px); background: var(--navy); color: #fff; padding: 11px 16px; border-radius: 12px; box-shadow: var(--shadow); font-weight: 600; font-size: .92rem; }
+.toast button { background: none; border: 0; color: var(--gold-bg); font-weight: 800; text-decoration: underline; padding: 2px; }
+@media (max-width: 720px) { .toast { bottom: calc(86px + env(safe-area-inset-bottom)); } }
+dialog { border: 0; border-radius: 16px; padding: 0; background: var(--surface); color: var(--text); width: min(560px, calc(100vw - 24px)); max-height: 86vh; box-shadow: var(--shadow); }
+dialog::backdrop { background: rgba(8, 12, 30, .6); }
+.dlg-in { padding: 18px; display: flex; flex-direction: column; gap: 12px; max-height: 86vh; }
+#colsBody { overflow: auto; display: grid; gap: 10px; padding-right: 4px; }
+#colsBody fieldset, .jform fieldset { border: 1.5px solid var(--border); border-radius: 12px; padding: 8px 12px 12px; margin: 0; min-width: 0; }
+legend { font-weight: 800; font-size: .9rem; padding: 0 6px; }
+#colsBody label { display: flex; padding: 5px 0; }
+.dlg-act { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ---------- Roue ---------- */
+details.panel.filters { padding: 0; margin-bottom: 24px; }
+details.panel summary { cursor: pointer; font-weight: 800; list-style: none; display: flex; align-items: center; gap: 12px; padding: 14px 18px; }
+details.panel summary::-webkit-details-marker { display: none; }
+details.panel summary::after { content: "+"; font-size: 1.4rem; color: var(--muted); }
+details.panel[open] > summary::after { content: "−"; }
+.fs-title { font-size: 1.05rem; } .fs-count { margin-left: auto; color: var(--muted); font-weight: 600; font-size: .9rem; }
+.badge-n { background: var(--sel-bg); color: var(--sel-text); border-radius: 999px; padding: 1px 10px; font-size: .8rem; font-weight: 800; }
+.fbody { border-top: 1px solid var(--border); padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 16px; }
+#filterBody { display: flex; flex-direction: column; gap: 16px; }
+.frow { display: grid; grid-template-columns: 120px 1fr; gap: 6px 16px; align-items: start; }
+.fhead { display: flex; align-items: center; gap: 10px; min-height: 38px; font-weight: 800; }
+.fclear { font-size: .85rem; }
+.fchips { display: flex; flex-wrap: wrap; gap: 8px; }
+.fchip { --c: var(--sel-bg); --ct: var(--sel-text); display: inline-flex; align-items: center; gap: 8px; min-height: 38px; padding: 6px 15px 6px 11px; border: 1.5px solid var(--border); background: var(--surface); border-radius: 999px; font-size: .92rem; font-weight: 700; transition: background .15s, border-color .15s, color .15s; }
+.fchip::before { content: ""; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); flex: none; }
+.fchip.type::before { background: var(--c); border-color: var(--c); }
+.fchip:hover { border-color: var(--c); }
+.fchip[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: var(--ct); }
+.fchip[aria-pressed="true"]::before { content: "\2713"; border: 0; background: none; width: auto; height: auto; font-size: .95rem; line-height: 1; font-weight: 900; }
+.chip-tag { font-size: .72rem; font-weight: 700; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); }
+.fchip[aria-pressed="true"] .chip-tag { background: rgba(255, 255, 255, .28); color: inherit; }
+.fsub { display: grid; grid-template-columns: 58px 1fr; gap: 6px 10px; align-items: start; margin-bottom: 8px; }
+.fsub-l { border: 0; background: none; padding: 0; min-height: 38px; text-align: left; font-weight: 800; color: var(--muted); }
+.fsub-l:hover { color: var(--text); text-decoration: underline; }
+.frow .seg { margin-top: 12px; }
+.ffoot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.fmsg { color: var(--muted); font-size: .9rem; }
+.locked { opacity: .65; pointer-events: none; }
+@media (max-width: 720px) { .frow { grid-template-columns: 1fr; } .fsub { grid-template-columns: 1fr; margin-bottom: 12px; } .fsub-l { min-height: 0; } .frow .seg { display: flex; flex-direction: column; width: 100%; } .frow .seg button + button { border-left: 0; border-top: 1.5px solid var(--border); } }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+@media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+.wheel-col { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.wheel-wrap { position: relative; width: 100%; max-width: 620px; aspect-ratio: 1; }
+#wheel { display: block; width: 100%; height: 100%; border-radius: 50%; box-shadow: var(--shadow); }
+.pointer { position: absolute; left: 50%; top: -10px; transform: translateX(-50%); width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; border-top: 34px solid var(--text); filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .35)); z-index: 2; }
+.hub { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: 21%; aspect-ratio: 1; border-radius: 50%; border: 5px solid #fff; background: var(--accent); color: #fff; font-weight: 800; font-size: clamp(.85rem, 2.4vw, 1.25rem); box-shadow: 0 0 0 4px var(--navy), 0 6px 16px rgba(0, 0, 0, .4); transition: transform .12s; z-index: 2; }
+.hub:hover:not(:disabled) { transform: translate(-50%, -50%) scale(1.05); } .hub:active:not(:disabled) { transform: translate(-50%, -50%) scale(.96); } .hub:disabled { opacity: .55; cursor: not-allowed; }
+.live { min-height: 2.2em; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 10px; }
+.live .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--border); flex: none; }
+.meta-line { color: var(--muted); font-size: .95rem; text-align: center; }
+.options { display: flex; flex-wrap: wrap; gap: 14px 22px; justify-content: center; align-items: center; }
+.side { display: flex; flex-direction: column; gap: 20px; min-width: 0; }
+.result { display: grid; grid-template-columns: 150px 1fr; gap: 16px; align-items: start; animation: pop .45s cubic-bezier(.2, 1.4, .4, 1); }
+@keyframes pop { from { transform: scale(.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.art { position: relative; width: 150px; height: 150px; border-radius: 14px; background: var(--surface-2); overflow: hidden; display: grid; place-items: center; }
+.art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: var(--surface-2); }
+.art-toggle { position: absolute; right: 6px; bottom: 6px; z-index: 2; width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--surface); color: var(--muted); font-size: 1rem; box-shadow: 0 2px 6px rgba(0, 0, 0, .25); }
+.art-toggle[aria-pressed="true"] { background: var(--gold-bg); color: var(--gold-text); }
+.res-body h3 { font-size: 1.7rem; line-height: 1.15; letter-spacing: -.01em; }
+.num { color: var(--muted); font-weight: 700; margin: 2px 0 10px; }
+.badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.tags { margin-top: 10px; color: var(--muted); font-size: .9rem; }
+.res-status { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.res-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.btn-shiny, .btn-card { border-radius: 10px; padding: 8px 14px; font-weight: 800; min-height: 40px; background: transparent; border: 2px solid var(--gold); color: var(--text); }
+.btn-card { border-color: var(--ok); }
+.btn-shiny:hover:not(:disabled) { background: var(--gold-soft); } .btn-card:hover { background: var(--ok-soft); }
+.btn-shiny.done { background: var(--gold-bg); border-color: var(--gold-bg); color: var(--gold-text); }
+.btn-card.done { background: var(--ok); border-color: var(--ok); color: #fff; }
+.btn-shiny:disabled { opacity: .55; cursor: not-allowed; }
+@media (max-width: 480px) { .result { grid-template-columns: 1fr; justify-items: center; text-align: center; } .badges, .res-status, .res-actions { justify-content: center; } }
+.panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; } .panel-head h2 { margin: 0; }
+.history { list-style: none; margin: 0; padding: 0; max-height: 240px; overflow: auto; display: flex; flex-direction: column; gap: 4px; }
+.history li { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; } .history li:nth-child(odd) { background: var(--surface-2); }
+.history .sw { width: 12px; height: 12px; border-radius: 50%; flex: none; } .history .hn { font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .history .hid { color: var(--muted); font-size: .85rem; }
+.hunt-row { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-bottom: 10px; }
+#huntGame { flex: 1; min-width: 200px; }
+.hunt-stat { font-size: .92rem; color: var(--muted); margin: 6px 0 12px; }
+details.sub { margin: 12px 0 0; } details.sub summary { padding: 4px 0; font-size: 1rem; } 
+.got, .pool { display: flex; flex-wrap: wrap; gap: 5px; max-height: 240px; overflow: auto; padding-top: 8px; }
+.got p { color: var(--muted); font-size: .9rem; }
+.got button, .pool button { border: 0; border-radius: 999px; padding: 3px 10px; font-size: .82rem; font-weight: 700; }
+.pool button.off { opacity: .28; text-decoration: line-through; } .pool button.got-it { box-shadow: inset 0 0 0 2px var(--gold-bg); }
+.list-tools { margin: 12px 0 8px; } .list-tools input { width: 100%; min-height: 40px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg); }
+
+/* ---------- Shiny ---------- */
+.stat-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.stat { position: relative; overflow: hidden; text-align: left; background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 10px 12px 14px; display: flex; flex-direction: column; gap: 0; }
+.stat b { font-size: 1.7rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.stat span { font-weight: 800; font-size: .88rem; } .stat small { color: var(--muted); font-size: .78rem; }
+.stat i { position: absolute; left: 0; bottom: 0; height: 5px; background: var(--gold-bg); }
+.stat.on { border-color: var(--gold-bg); box-shadow: 0 0 0 2px var(--gold-bg); }
+.shead, .srow { display: grid; grid-template-columns: 44px 52px minmax(130px, 1fr) repeat(var(--n, 6), 92px); align-items: center; gap: 8px; }
+.shead { position: sticky; top: calc(var(--top-h) + env(safe-area-inset-top)); z-index: 5; background: var(--bg); padding: 8px 10px; font-size: .76rem; font-weight: 800; color: var(--muted); border-bottom: 2px solid var(--border); }
+.shead .hc { text-align: center; line-height: 1.15; }
+.srow { padding: 4px 10px; border-bottom: 1px solid var(--border); content-visibility: auto; contain-intrinsic-size: auto 58px; }
+.srow:hover { background: var(--surface); }
+.sn { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; font-size: .85rem; }
+.sname { font-weight: 800; min-width: 0; } .sname small { display: block; color: var(--muted); font-weight: 600; font-size: .76rem; }
+.sgames { display: contents; }
+.scell { width: 100%; min-height: 38px; border-radius: 9px; border: 1.5px solid var(--border); background: transparent; color: var(--border); font-size: 1.05rem; }
+.scell:hover { border-color: var(--gold-bg); color: var(--gold-bg); }
+.scell.on { background: var(--gold-bg); border-color: var(--gold-bg); color: var(--gold-text); }
+.scell.dim:not(.on) { opacity: .4; }
+@media (max-width: 720px) {
+  .shead { display: none; }
+  .srow { grid-template-columns: 34px 48px 1fr; row-gap: 6px; padding: 8px 4px; }
+  .sgames { display: flex; flex-wrap: wrap; gap: 6px; grid-column: 1 / -1; }
+  .scell { width: auto; font-size: 0; display: inline-flex; align-items: center; padding: 4px 11px; min-height: 36px; color: var(--text); }
+  .scell::before { content: "✦"; font-size: .95rem; margin-right: 6px; color: var(--border); }
+  .scell::after { content: attr(data-label); font-size: .8rem; font-weight: 700; }
+  .scell.on::before { color: var(--gold-text); } .scell.on { color: var(--gold-text); }
+}
+
+/* ---------- Cartes ---------- */
+.genstrip { display: grid; grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); gap: 8px; margin: 14px 0; }
+.gstrip { position: relative; overflow: hidden; text-align: left; background: var(--surface); border: 1.5px solid var(--border); border-radius: 12px; padding: 7px 10px 11px; display: flex; flex-direction: column; }
+.gstrip span { font-size: .78rem; font-weight: 800; color: var(--muted); } .gstrip b { font-size: 1rem; font-variant-numeric: tabular-nums; }
+.gstrip i { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--ok); }
+.gstrip.on { border-color: var(--text); box-shadow: 0 0 0 1.5px var(--text); } .gstrip.done b { color: var(--ok); }
+.gsec { margin-top: 22px; }
+.gsec h3 { font-size: 1.1rem; margin-bottom: 10px; } .gsec h3 small { color: var(--muted); font-weight: 700; font-size: .85rem; margin-left: 6px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
+.tile { position: relative; aspect-ratio: 5 / 6.6; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; padding: 6px 4px 8px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); transition: transform .12s, opacity .2s; content-visibility: auto; contain-intrinsic-size: auto 126px; }
+.tile .tn { position: absolute; top: 6px; left: 8px; font-size: .72rem; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tile .spr { margin-bottom: auto; margin-top: 10px; }
+.tile .tname { font-size: .78rem; font-weight: 800; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tile.own { border-color: var(--ok); background-image: linear-gradient(140deg, rgba(255, 255, 255, .5), transparent 42%); }
+.tile.own::after { content: "✓"; position: absolute; top: 4px; right: 6px; width: 18px; height: 18px; border-radius: 50%; background: var(--ok); color: #fff; font-size: .7rem; font-weight: 900; display: grid; place-items: center; }
+.tile.miss { border-style: dashed; background: transparent; }
+.tile.miss .spr { filter: var(--sil); } .tile.miss .tname { color: var(--muted); }
+.tile:hover { transform: translateY(-2px); } .tile:active { transform: scale(.96); }
+.tile.gone { opacity: 0; transform: scale(.9); }
+.sumrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 6px 0 20px; }
+.sum { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 12px 14px; } .sum b { display: block; font-size: 1.8rem; line-height: 1.1; font-variant-numeric: tabular-nums; } .sum span { color: var(--muted); font-size: .85rem; font-weight: 600; }
+.catgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.catgroup { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px; } .catgroup h4 { margin-bottom: 8px; }
+.catrow { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.catrow:last-child { border-bottom: 0; } .catrow .cl { font-weight: 700; } .catrow b { font-variant-numeric: tabular-nums; } .catrow em { grid-column: 1; color: var(--muted); font-size: .78rem; font-style: normal; }
+.cbar { grid-column: 1 / -1; height: 5px; background: var(--surface-2); border-radius: 999px; overflow: hidden; } .cbar i { display: block; height: 100%; background: var(--ok); }
+.sec { margin: 28px 0 10px; font-size: 1.15rem; }
+.entries { display: flex; flex-direction: column; gap: 6px; }
+.entry { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.entry summary { padding: 10px 14px; display: flex; gap: 12px; align-items: center; cursor: pointer; list-style: none; } .entry summary::-webkit-details-marker { display: none; }
+.entry summary::after { content: none; }
+.entry .el { font-weight: 800; flex: 1; min-width: 0; } .entry .ed { color: var(--muted); font-size: .85rem; } .entry summary b { font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; } .entry b.neg { color: var(--miss); }
+.ebody { padding: 4px 14px 14px; display: flex; flex-wrap: wrap; gap: 6px; } .eact { width: 100%; display: flex; gap: 8px; margin-top: 8px; }
+.jform { margin-top: 26px; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.jtop { display: grid; grid-template-columns: 1fr 180px; gap: 10px; } .jtop label, .jgrid label { display: flex; flex-direction: column; gap: 4px; font-size: .82rem; font-weight: 700; }
+.jgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; }
+.jact { display: flex; gap: 8px; flex-wrap: wrap; }
+@media (max-width: 480px) { .jtop { grid-template-columns: 1fr; } }
+
+/* ---------- Données ---------- */
+.dt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.dt-grid .panel { display: flex; flex-direction: column; gap: 10px; }
+.dt-grid p { color: var(--muted); font-size: .92rem; }
+#dtInfo { margin: 0; padding-left: 18px; line-height: 1.7; }
+#dtCodeIn, #dtCodeOut { width: 100%; min-height: 84px; resize: vertical; font-family: ui-monospace, Menlo, monospace; font-size: .78rem; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.modes { display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; background: var(--surface-2); border-radius: 12px; }
+.modes label { font-size: .9rem; display: flex; gap: 8px; align-items: flex-start; cursor: pointer; } .modes input { margin-top: 4px; accent-color: var(--accent); }
+.dt-msg { min-height: 1.4em; font-weight: 700; color: var(--ok); margin: 14px 2px 0; } .dt-msg.bad { color: var(--miss); }
+.warn { background: var(--gold-soft); border-radius: 12px; padding: 10px 14px; font-size: .92rem; }
+.howto { font-size: .92rem; color: var(--muted); } .howto li { margin: 4px 0; } .howto ol, .howto ul { padding-left: 20px; margin: 6px 0; } .howto strong { color: var(--text); }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Aller au contenu</a>
+<header class="top">
+  <div class="brand"><span class="ball" aria-hidden="true"></span><span>Pokéhub</span></div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" data-tab="wheel" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 3v7M12 14v7M3 12h7M14 12h7"/></svg><span>Roue</span></button>
+    <button type="button" role="tab" data-tab="shiny" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.2 6.3L21 12l-6.8 2.7L12 21l-2.2-6.3L3 12l6.8-2.7z"/></svg><span>Shiny</span></button>
+    <button type="button" role="tab" data-tab="cards" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="11" height="16" rx="2"/><path d="M19 7v12a2 2 0 0 1-2 2H9"/></svg><span>Cartes</span></button>
+    <button type="button" role="tab" data-tab="data" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg><span>Données</span></button>
+  </nav>
+  <div class="pills" aria-live="polite">
+    <span class="pill gold" id="pillShiny" title="Pokémon différents obtenus en shiny"></span>
+    <span class="pill" id="pillCards" title="Pokémon avec au moins une carte"></span>
+  </div>
+</header>
+
+<main id="main">
+<!-- ================= ROUE ================= -->
+<section class="view" id="v-wheel">
+  <details class="panel filters" id="filters" open>
+    <summary><span class="fs-title">Filtres</span><span class="badge-n" id="filterBadge" hidden>0</span><span class="fs-count" id="filterCount"></span></summary>
+    <div class="fbody">
+      <div id="filterBody"></div>
+      <div class="ffoot"><span class="fmsg" id="filterMsg" role="status"></span><button class="link-btn" id="resetFilters" type="button" disabled>Réinitialiser les filtres</button></div>
+    </div>
+  </details>
+  <div class="layout">
+    <section class="wheel-col" aria-label="Roue">
+      <div class="wheel-wrap" id="wheelWrap">
+        <div class="pointer" aria-hidden="true"></div>
+        <canvas id="wheel" aria-hidden="true"></canvas>
+        <button class="hub" id="spin" type="button">Tourner !</button>
+      </div>
+      <div class="live"><span class="dot" id="liveDot"></span><span id="liveName">&nbsp;</span></div>
+      <div class="meta-line" id="count"></div>
+      <div class="options">
+        <label class="check"><input type="checkbox" id="removeWinner"> Retirer le gagnant de la roue</label>
+        <button class="link-btn" id="resetExcluded" type="button" disabled>Remettre tous les Pokémon</button>
+      </div>
+    </section>
+    <aside class="side">
+      <section class="panel" aria-labelledby="rTitle"><h2 id="rTitle">Résultat</h2><div id="result"><p class="hint">Appuyez sur « Tourner ! » (ou sur la barre d’espace).</p></div></section>
+      <section class="panel" id="huntPanel" aria-labelledby="huntTitle">
+        <h2 id="huntTitle">Chasse au shiny</h2>
+        <div class="hunt-row"><label for="huntGame"><strong>Jeu de chasse</strong></label><select id="huntGame"></select></div>
+        <button class="link-btn" id="huntFilter" type="button" hidden>Limiter la roue aux Pokémon de ce jeu</button>
+        <div id="huntStats" hidden><div class="bar"><i id="huntBar"></i></div><p class="hunt-stat" id="huntStat"></p></div>
+        <label class="check"><input type="checkbox" id="hideObtained" checked> Masquer de la roue les shiny déjà obtenus</label>
+        <details class="sub"><summary id="gotSummary">Mes shiny obtenus</summary><div class="got" id="got"></div></details>
+      </section>
+      <section class="panel" aria-labelledby="hTitle">
+        <div class="panel-head"><h2 id="hTitle">Historique</h2><button class="link-btn" id="clearHistory" type="button" disabled>Effacer</button></div>
+        <ul class="history" id="history"></ul><p class="hint" id="historyEmpty">Aucun tirage pour l’instant.</p>
+      </section>
+      <details class="panel" id="listPanel"><summary>Modifier la liste</summary>
+        <div style="padding:0 18px 18px"><div class="list-tools"><input type="search" id="search" placeholder="Rechercher un Pokémon" aria-label="Rechercher un Pokémon"></div>
+        <p class="hint">Cliquez sur un Pokémon pour l’exclure de la roue ou l’y remettre.</p><div class="pool" id="pool"></div></div>
+      </details>
+    </aside>
+  </div>
+</section>
+
+<!-- ================= SHINY ================= -->
+<section class="view" id="v-shiny" hidden>
+  <div class="view-head">
+    <div class="bignum"><strong id="shTotal">0</strong><span>Pokémon différents en shiny</span></div>
+    <div class="head-actions"><button type="button" class="btn-ghost" id="shCols">Choisir les jeux suivis</button></div>
+  </div>
+  <div class="stat-row" id="shStats"></div>
+  <div class="toolbar">
+    <input type="search" id="shQ" placeholder="Nom ou numéro" aria-label="Rechercher un Pokémon">
+    <select id="shGen" aria-label="Génération"></select>
+    <div class="seg" id="shStatus" role="group" aria-label="Filtrer par statut">
+      <button type="button" data-s="all" aria-pressed="true">Tous</button><button type="button" data-s="got" aria-pressed="false">Obtenus</button><button type="button" data-s="missing" aria-pressed="false">Manquants</button>
+    </div>
+    <select id="shGame" aria-label="Jeu concerné par le statut"></select>
+  </div>
+  <p class="hint" id="shCount"></p>
+  <div class="shead" id="shHead"></div>
+  <div id="shList"></div>
+  <dialog id="colsDlg"><div class="dlg-in"><h2>Jeux suivis dans le tableau</h2><div id="colsBody"></div><div class="dlg-act"><button type="button" class="btn-ghost" id="colsCancel">Annuler</button><button type="button" class="btn-primary" id="colsApply">Appliquer</button></div></div></dialog>
+</section>
+
+<!-- ================= CARTES ================= -->
+<section class="view" id="v-cards" hidden>
+  <div class="view-head">
+    <div class="bignum"><strong id="cdOwned"></strong><span id="cdSubtitle"></span></div>
+    <div class="head-actions"><button type="button" class="btn-primary" id="cdSpin">Tirer un manquant au sort</button></div>
+  </div>
+  <div class="bar big"><i id="cdBar"></i></div>
+  <div class="genstrip" id="cdGens"></div>
+  <div class="seg" id="cdTabs" role="group" aria-label="Affichage"><button type="button" data-t="list" aria-pressed="true">Pokémon</button><button type="button" data-t="stats" aria-pressed="false">Statistiques et journal</button></div>
+  <div id="cdPokemon">
+    <div class="toolbar">
+      <div class="seg" id="cdStatus" role="group" aria-label="Filtrer par statut"><button type="button" data-s="missing" aria-pressed="true">Manquantes</button><button type="button" data-s="own" aria-pressed="false">Possédées</button><button type="button" data-s="all" aria-pressed="false">Toutes</button></div>
+      <select id="cdGen" aria-label="Génération"></select>
+      <input type="search" id="cdQ" placeholder="Nom ou numéro" aria-label="Rechercher un Pokémon">
+    </div>
+    <p class="hint" id="cdCount"></p>
+    <div id="cdList"></div>
+  </div>
+  <div id="cdStats" hidden></div>
+</section>
+
+<!-- ================= DONNÉES ================= -->
+<section class="view" id="v-data" hidden>
+  <div class="view-head"><div class="bignum"><strong style="font-size:2rem">Mes données</strong></div></div>
+  <div class="dt-grid">
+    <section class="panel"><h2>Où j’en suis</h2><ul id="dtInfo"></ul><p class="warn" id="dtStore" hidden>Le navigateur bloque le stockage local : rien ne sera conservé. Exportez une sauvegarde avant de quitter.</p></section>
+    <section class="panel"><h2>Quand j’importe des données…</h2>
+      <div class="modes">
+        <label><input type="radio" name="dtmode" value="merge" checked><span><strong>Fusionner</strong> : ajoute ce qui manque, ne retire rien. Le plus sûr.</span></label>
+        <label><input type="radio" name="dtmode" value="replace"><span><strong>Remplacer</strong> : copie exacte de la sauvegarde, retraits compris.</span></label>
+      </div><p>Ce choix s’applique au fichier et au code ci-dessous.</p></section>
+    <section class="panel"><h2>Sauvegarde dans un fichier</h2><p>Un fichier à garder (cloud, mail à soi-même) : il contient vos shiny, vos cartes et votre journal.</p>
+      <div class="row"><button type="button" class="btn-primary" id="dtExport">Exporter</button><button type="button" class="btn-ghost" id="dtImportBtn">Importer un fichier</button><input type="file" id="dtFile" accept="application/json,.json" hidden></div></section>
+    <section class="panel"><h2>Passer du PC au téléphone</h2><p>Sans fichier : copiez le code, envoyez-le-vous (message, note), puis collez-le dans l’autre appareil.</p>
+      <div class="row"><button type="button" class="btn-primary" id="dtCopy">Copier mon code</button></div>
+      <textarea id="dtCodeOut" readonly placeholder="Votre code apparaît ici" aria-label="Votre code"></textarea>
+      <textarea id="dtCodeIn" placeholder="Collez ici un code reçu" aria-label="Code à importer"></textarea>
+      <div class="row"><button type="button" class="btn-ghost" id="dtApplyCode">Appliquer le code</button></div></section>
+    <section class="panel"><h2>Installer sur le téléphone</h2>
+      <button type="button" class="btn-primary" id="dtInstall" hidden>Installer l’application</button>
+      <div class="howto"><ol>
+        <li>Mettez le dossier <strong>pokehub</strong> en ligne (GitHub Pages, Netlify ou Cloudflare Pages, gratuits) : vous obtenez une adresse https.</li>
+        <li>Ouvrez cette adresse sur le téléphone.</li>
+        <li><strong>Android (Chrome)</strong> : menu ⋮, puis « Installer l’application ». <strong>iPhone (Safari)</strong> : Partager, puis « Sur l’écran d’accueil ».</li></ol>
+        <p>Ensuite elle s’ouvre comme une application et marche sans internet. Sur iPhone, installez-la : sinon Safari peut effacer les données après quelques semaines sans visite.</p></div></section>
+    <section class="panel"><h2>Remise à zéro</h2><p>Revenir aux données de départ de vos tableurs, ou tout effacer.</p>
+      <div class="row"><button type="button" class="btn-ghost" id="dtReset">Revenir aux tableurs</button><button type="button" class="btn-ghost danger" id="dtWipe">Tout effacer</button></div></section>
+  </div>
+  <p class="dt-msg" id="dtMsg" role="status"></p>
+</section>
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<script>
+const RAW=[["Bulbizarre",1,0,4,7],["Herbizarre",1,0,4,7],["Florizarre",1,0,4,7],["Salamèche",1,0,1,-1],["Reptincel",1,0,1,-1],["Dracaufeu",1,0,1,9],["Carapuce",1,0,2,-1],["Carabaffe",1,0,2,-1],["Tortank",1,0,2,-1],["Chenipan",1,0,11,-1],["Chrysacier",1,0,11,-1],["Papilusion",1,0,11,9],["Aspicot",1,0,11,7],["Coconfort",1,0,11,7],["Dardargnan",1,0,11,7],["Roucool",1,0,0,9],["Roucoups",1,0,0,9],["Roucarnage",1,0,0,9],["Rattata",1,0,0,-1],["Rattatac",1,0,0,-1],["Piafabec",1,0,0,9],["Rapasdepic",1,0,0,9],["Abo",1,0,7,-1],["Arbok",1,0,7,-1],["Pikachu",1,0,3,-1],["Raichu",1,0,3,-1],["Sabelette",1,0,8,-1],["Sablaireau",1,0,8,-1],["Nidoran♀",1,0,7,-1],["Nidorina",1,0,7,-1],["Nidoqueen",1,0,7,8],["Nidoran♂",1,0,7,-1],["Nidorino",1,0,7,-1],["Nidoking",1,0,7,8],["Mélofée",1,0,17,-1],["Mélodelfe",1,0,17,-1],["Goupix",1,0,1,-1],["Feunard",1,0,1,-1],["Rondoudou",1,0,0,17],["Grodoudou",1,0,0,17],["Nosferapti",1,0,7,9],["Nosferalto",1,0,7,9],["Mystherbe",1,0,4,7],["Ortide",1,0,4,7],["Rafflesia",1,0,4,7],["Paras",1,0,11,4],["Parasect",1,0,11,4],["Mimitoss",1,0,11,7],["Aéromite",1,0,11,7],["Taupiqueur",1,0,8,-1],["Triopikeur",1,0,8,-1],["Miaouss",1,0,0,-1],["Persian",1,0,0,-1],["Psykokwak",1,0,2,-1],["Akwakwak",1,0,2,-1],["Férosinge",1,0,6,-1],["Colossinge",1,0,6,-1],["Caninos",1,0,1,-1],["Arcanin",1,0,1,-1],["Ptitard",1,0,2,-1],["Têtarte",1,0,2,-1],["Tartard",1,0,2,6],["Abra",1,0,10,-1],["Kadabra",1,0,10,-1],["Alakazam",1,0,10,-1],["Machoc",1,0,6,-1],["Machopeur",1,0,6,-1],["Mackogneur",1,0,6,-1],["Chétiflor",1,0,4,7],["Boustiflor",1,0,4,7],["Empiflor",1,0,4,7],["Tentacool",1,0,2,7],["Tentacruel",1,0,2,7],["Racaillou",1,0,12,8],["Gravalanch",1,0,12,8],["Grolem",1,0,12,8],["Ponyta",1,0,1,-1],["Galopa",1,0,1,-1],["Ramoloss",1,0,2,10],["Flagadoss",1,0,2,10],["Magnéti",1,0,3,16],["Magnéton",1,0,3,16],["Canarticho",1,0,0,9],["Doduo",1,0,0,9],["Dodrio",1,0,0,9],["Otaria",1,0,2,-1],["Lamantine",1,0,2,5],["Tadmorv",1,0,7,-1],["Grotadmorv",1,0,7,-1],["Kokiyas",1,0,2,-1],["Crustabri",1,0,2,5],["Fantominus",1,0,13,7],["Spectrum",1,0,13,7],["Ectoplasma",1,0,13,7],["Onix",1,0,12,8],["Soporifik",1,0,10,-1],["Hypnomade",1,0,10,-1],["Krabby",1,0,2,-1],["Krabboss",1,0,2,-1],["Voltorbe",1,0,3,-1],["Électrode",1,0,3,-1],["Noeunoeuf",1,0,4,10],["Noadkoko",1,0,4,10],["Osselait",1,0,8,-1],["Ossatueur",1,0,8,-1],["Kicklee",1,0,6,-1],["Tygnon",1,0,6,-1],["Excelangue",1,0,0,-1],["Smogo",1,0,7,-1],["Smogogo",1,0,7,-1],["Rhinocorne",1,0,8,12],["Rhinoféros",1,0,8,12],["Leveinard",1,0,0,-1],["Saquedeneu",1,0,4,-1],["Kangourex",1,0,0,-1],["Hypotrempe",1,0,2,-1],["Hypocéan",1,0,2,-1],["Poissirène",1,0,2,-1],["Poissoroy",1,0,2,-1],["Stari",1,0,2,-1],["Staross",1,0,2,10],["M. Mime",1,0,10,17],["Insécateur",1,0,11,9],["Lippoutou",1,0,5,10],["Élektek",1,0,3,-1],["Magmar",1,0,1,-1],["Scarabrute",1,0,11,-1],["Tauros",1,0,0,-1],["Magicarpe",1,0,2,-1],["Léviator",1,0,2,9],["Lokhlass",1,0,2,5],["Métamorph",1,0,0,-1],["Évoli",1,0,0,-1],["Aquali",1,0,2,-1],["Voltali",1,0,3,-1],["Pyroli",1,0,1,-1],["Porygon",1,0,0,-1],["Amonita",1,0,12,2],["Amonistar",1,0,12,2],["Kabuto",1,0,12,2],["Kabutops",1,0,12,2],["Ptéra",1,0,12,9],["Ronflex",1,0,0,-1],["Artikodin",1,1,5,9],["Électhor",1,1,3,9],["Sulfura",1,1,1,9],["Minidraco",1,0,14,-1],["Draco",1,0,14,-1],["Dracolosse",1,0,14,9],["Mewtwo",1,1,10,-1],["Mew",1,2,10,-1],["Germignon",2,0,4,-1],["Macronium",2,0,4,-1],["Méganium",2,0,4,-1],["Héricendre",2,0,1,-1],["Feurisson",2,0,1,-1],["Typhlosion",2,0,1,-1],["Kaiminus",2,0,2,-1],["Crocrodil",2,0,2,-1],["Aligatueur",2,0,2,-1],["Fouinette",2,0,0,-1],["Fouinar",2,0,0,-1],["Hoothoot",2,0,0,9],["Noarfang",2,0,0,9],["Coxy",2,0,11,9],["Coxyclaque",2,0,11,9],["Mimigal",2,0,11,7],["Migalos",2,0,11,7],["Nostenfer",2,0,7,9],["Loupio",2,0,2,3],["Lanturn",2,0,2,3],["Pichu",2,4,3,-1],["Mélo",2,4,17,-1],["Toudoudou",2,4,0,17],["Togepi",2,4,17,-1],["Togetic",2,0,17,9],["Natu",2,0,10,9],["Xatu",2,0,10,9],["Wattouat",2,0,3,-1],["Lainergie",2,0,3,-1],["Pharamp",2,0,3,-1],["Joliflor",2,0,4,-1],["Marill",2,0,2,17],["Azumarill",2,0,2,17],["Simularbre",2,0,12,-1],["Tarpaud",2,0,2,-1],["Granivol",2,0,4,9],["Floravol",2,0,4,9],["Cotovol",2,0,4,9],["Capumain",2,0,0,-1],["Tournegrin",2,0,4,-1],["Héliatronc",2,0,4,-1],["Yanma",2,0,11,9],["Axoloto",2,0,2,8],["Maraiste",2,0,2,8],["Mentali",2,0,10,-1],["Noctali",2,0,15,-1],["Cornèbre",2,0,15,9],["Roigada",2,0,2,10],["Feuforêve",2,0,13,-1],["Zarbi",2,0,10,-1],["Qulbutoké",2,0,10,-1],["Girafarig",2,0,0,10],["Pomdepik",2,0,11,-1],["Foretress",2,0,11,16],["Insolourdo",2,0,0,-1],["Scorplane",2,0,8,9],["Steelix",2,0,16,8],["Snubbull",2,0,17,-1],["Granbull",2,0,17,-1],["Qwilfish",2,0,2,7],["Cizayox",2,0,11,16],["Caratroc",2,0,11,12],["Scarhino",2,0,11,6],["Farfuret",2,0,15,5],["Teddiursa",2,0,0,-1],["Ursaring",2,0,0,-1],["Limagma",2,0,1,-1],["Volcaropod",2,0,1,12],["Marcacrin",2,0,5,8],["Cochignon",2,0,5,8],["Corayon",2,0,2,12],["Rémoraid",2,0,2,-1],["Octillery",2,0,2,-1],["Cadoizo",2,0,5,9],["Démanta",2,0,2,9],["Airmure",2,0,16,9],["Malosse",2,0,15,1],["Démolosse",2,0,15,1],["Hyporoi",2,0,2,14],["Phanpy",2,0,8,-1],["Donphan",2,0,8,-1],["Porygon2",2,0,0,-1],["Cerfrousse",2,0,0,-1],["Queulorior",2,0,0,-1],["Debugant",2,4,6,-1],["Kapoera",2,0,6,-1],["Lippouti",2,4,5,10],["Élekid",2,4,3,-1],["Magby",2,4,1,-1],["Écrémeuh",2,0,0,-1],["Leuphorie",2,0,0,-1],["Raikou",2,1,3,-1],["Entei",2,1,1,-1],["Suicune",2,1,2,-1],["Embrylex",2,0,12,8],["Ymphect",2,0,12,8],["Tyranocif",2,0,12,15],["Lugia",2,1,10,9],["Ho-Oh",2,1,1,9],["Celebi",2,2,10,4],["Arcko",3,0,4,-1],["Massko",3,0,4,-1],["Jungko",3,0,4,-1],["Poussifeu",3,0,1,-1],["Galifeu",3,0,1,6],["Braségali",3,0,1,6],["Gobou",3,0,2,-1],["Flobio",3,0,2,8],["Laggron",3,0,2,8],["Medhyèna",3,0,15,-1],["Grahyèna",3,0,15,-1],["Zigzaton",3,0,0,-1],["Linéon",3,0,0,-1],["Chenipotte",3,0,11,-1],["Armulys",3,0,11,-1],["Charmillon",3,0,11,9],["Blindalys",3,0,11,-1],["Papinox",3,0,11,7],["Nénupiot",3,0,2,4],["Lombre",3,0,2,4],["Ludicolo",3,0,2,4],["Grainipiot",3,0,4,-1],["Pifeuil",3,0,4,15],["Tengalice",3,0,4,15],["Nirondelle",3,0,0,9],["Hélédelle",3,0,0,9],["Goélise",3,0,2,9],["Bekipan",3,0,2,9],["Tarsal",3,0,10,17],["Kirlia",3,0,10,17],["Gardevoir",3,0,10,17],["Arakdo",3,0,11,2],["Maskadra",3,0,11,9],["Balignon",3,0,4,-1],["Chapignon",3,0,4,6],["Parecool",3,0,0,-1],["Vigoroth",3,0,0,-1],["Monaflèmit",3,0,0,-1],["Ningale",3,0,11,8],["Ninjask",3,0,11,9],["Munja",3,0,11,13],["Chuchmur",3,0,0,-1],["Ramboum",3,0,0,-1],["Brouhabam",3,0,0,-1],["Makuhita",3,0,6,-1],["Hariyama",3,0,6,-1],["Azurill",3,4,0,17],["Tarinor",3,0,12,-1],["Skitty",3,0,0,-1],["Delcatty",3,0,0,-1],["Ténéfix",3,0,15,13],["Mysdibule",3,0,16,17],["Galekid",3,0,16,12],["Galegon",3,0,16,12],["Galeking",3,0,16,12],["Méditikka",3,0,6,10],["Charmina",3,0,6,10],["Dynavolt",3,0,3,-1],["Élecsprint",3,0,3,-1],["Posipi",3,0,3,-1],["Négapi",3,0,3,-1],["Muciole",3,0,11,-1],["Lumivole",3,0,11,-1],["Rosélia",3,0,4,7],["Gloupti",3,0,7,-1],["Avaltout",3,0,7,-1],["Carvanha",3,0,2,15],["Sharpedo",3,0,2,15],["Wailmer",3,0,2,-1],["Wailord",3,0,2,-1],["Chamallot",3,0,1,8],["Camérupt",3,0,1,8],["Chartor",3,0,1,-1],["Spoink",3,0,10,-1],["Groret",3,0,10,-1],["Spinda",3,0,0,-1],["Kraknoix",3,0,8,-1],["Vibraninf",3,0,8,14],["Libégon",3,0,8,14],["Cacnea",3,0,4,-1],["Cacturne",3,0,4,15],["Tylton",3,0,0,9],["Altaria",3,0,14,9],["Mangriff",3,0,0,-1],["Séviper",3,0,7,-1],["Séléroc",3,0,12,10],["Solaroc",3,0,12,10],["Barloche",3,0,2,8],["Barbicha",3,0,2,8],["Écrapince",3,0,2,-1],["Colhomard",3,0,2,15],["Balbuto",3,0,8,10],["Kaorine",3,0,8,10],["Lilia",3,0,12,4],["Vacilys",3,0,12,4],["Anorith",3,0,12,11],["Armaldo",3,0,12,11],["Barpau",3,0,2,-1],["Milobellus",3,0,2,-1],["Morphéo",3,0,0,-1],["Kecleon",3,0,0,-1],["Polichombr",3,0,13,-1],["Branette",3,0,13,-1],["Skelénox",3,0,13,-1],["Téraclope",3,0,13,-1],["Tropius",3,0,4,9],["Éoko",3,0,10,-1],["Absol",3,0,15,-1],["Okéoké",3,4,10,-1],["Stalgamin",3,0,5,-1],["Oniglali",3,0,5,-1],["Obalie",3,0,5,2],["Phogleur",3,0,5,2],["Kaimorse",3,0,5,2],["Coquiperl",3,0,2,-1],["Serpang",3,0,2,-1],["Rosabyss",3,0,2,-1],["Relicanth",3,0,2,12],["Lovdisc",3,0,2,-1],["Draby",3,0,14,-1],["Drackhaus",3,0,14,-1],["Drattak",3,0,14,9],["Terhal",3,0,16,10],["Métang",3,0,16,10],["Métalosse",3,0,16,10],["Regirock",3,1,12,-1],["Regice",3,1,5,-1],["Registeel",3,1,16,-1],["Latias",3,1,14,10],["Latios",3,1,14,10],["Kyogre",3,1,2,-1],["Groudon",3,1,8,-1],["Rayquaza",3,1,14,9],["Jirachi",3,2,16,10],["Deoxys",3,2,10,-1],["Tortipouss",4,0,4,-1],["Boskara",4,0,4,-1],["Torterra",4,0,4,8],["Ouisticram",4,0,1,-1],["Chimpenfeu",4,0,1,6],["Simiabraz",4,0,1,6],["Tiplouf",4,0,2,-1],["Prinplouf",4,0,2,-1],["Pingoléon",4,0,2,16],["Étourmi",4,0,0,9],["Étourvol",4,0,0,9],["Étouraptor",4,0,0,9],["Keunotor",4,0,0,-1],["Castorno",4,0,0,2],["Crikzik",4,0,11,-1],["Mélokrik",4,0,11,-1],["Lixy",4,0,3,-1],["Luxio",4,0,3,-1],["Luxray",4,0,3,-1],["Rozbouton",4,4,4,7],["Roserade",4,0,4,7],["Kranidos",4,0,12,-1],["Charkos",4,0,12,-1],["Dinoclier",4,0,12,16],["Bastiodon",4,0,12,16],["Cheniti",4,0,11,-1],["Cheniselle",4,0,11,4],["Papilord",4,0,11,9],["Apitrini",4,0,11,9],["Apireine",4,0,11,9],["Pachirisu",4,0,3,-1],["Mustébouée",4,0,2,-1],["Mustéflott",4,0,2,-1],["Ceribou",4,0,4,-1],["Ceriflor",4,0,4,-1],["Sancoki",4,0,2,-1],["Tritosor",4,0,2,8],["Capidextre",4,0,0,-1],["Baudrive",4,0,13,9],["Grodrive",4,0,13,9],["Laporeille",4,0,0,-1],["Lockpin",4,0,0,-1],["Magirêve",4,0,13,-1],["Corboss",4,0,15,9],["Chaglam",4,0,0,-1],["Chaffreux",4,0,0,-1],["Korillon",4,4,10,-1],["Moufouette",4,0,7,15],["Moufflair",4,0,7,15],["Archéomire",4,0,16,10],["Archéodong",4,0,16,10],["Manzaï",4,4,12,-1],["Mime Jr.",4,4,10,17],["Ptiravi",4,4,0,-1],["Pijako",4,0,0,9],["Spiritomb",4,0,13,15],["Griknot",4,0,14,8],["Carmache",4,0,14,8],["Carchacrok",4,0,14,8],["Goinfrex",4,4,0,-1],["Riolu",4,4,6,-1],["Lucario",4,0,6,16],["Hippopotas",4,0,8,-1],["Hippodocus",4,0,8,-1],["Rapion",4,0,7,11],["Drascore",4,0,7,15],["Cradopaud",4,0,7,6],["Coatox",4,0,7,6],["Vortente",4,0,4,-1],["Écayon",4,0,2,-1],["Luminéon",4,0,2,-1],["Babimanta",4,4,2,9],["Blizzi",4,0,4,5],["Blizzaroi",4,0,4,5],["Dimoret",4,0,15,5],["Magnézone",4,0,3,16],["Coudlangue",4,0,0,-1],["Rhinastoc",4,0,8,12],["Bouldeneu",4,0,4,-1],["Élekable",4,0,3,-1],["Maganon",4,0,1,-1],["Togekiss",4,0,17,9],["Yanmega",4,0,11,9],["Phyllali",4,0,4,-1],["Givrali",4,0,5,-1],["Scorvol",4,0,8,9],["Mammochon",4,0,5,8],["Porygon-Z",4,0,0,-1],["Gallame",4,0,10,6],["Tarinorme",4,0,12,16],["Noctunoir",4,0,13,-1],["Momartik",4,0,5,13],["Motisma",4,0,3,13],["Créhelf",4,1,10,-1],["Créfollet",4,1,10,-1],["Créfadet",4,1,10,-1],["Dialga",4,1,16,14],["Palkia",4,1,2,14],["Heatran",4,1,1,16],["Regigigas",4,1,0,-1],["Giratina",4,1,13,14],["Cresselia",4,1,10,-1],["Phione",4,2,2,-1],["Manaphy",4,2,2,-1],["Darkrai",4,2,15,-1],["Shaymin",4,2,4,-1],["Arceus",4,2,0,-1],["Victini",5,2,10,1],["Vipélierre",5,0,4,-1],["Lianaja",5,0,4,-1],["Majaspic",5,0,4,-1],["Gruikui",5,0,1,-1],["Grotichon",5,0,1,6],["Roitiflam",5,0,1,6],["Moustillon",5,0,2,-1],["Mateloutre",5,0,2,-1],["Clamiral",5,0,2,-1],["Ratentif",5,0,0,-1],["Miradar",5,0,0,-1],["Ponchiot",5,0,0,-1],["Ponchien",5,0,0,-1],["Mastouffe",5,0,0,-1],["Chacripan",5,0,15,-1],["Léopardus",5,0,15,-1],["Feuillajou",5,0,4,-1],["Feuiloutan",5,0,4,-1],["Flamajou",5,0,1,-1],["Flamoutan",5,0,1,-1],["Flotajou",5,0,2,-1],["Flotoutan",5,0,2,-1],["Munna",5,0,10,-1],["Mushana",5,0,10,-1],["Poichigeon",5,0,0,9],["Colombeau",5,0,0,9],["Déflaisan",5,0,0,9],["Zébibron",5,0,3,-1],["Zéblitz",5,0,3,-1],["Nodulithe",5,0,12,-1],["Géolithe",5,0,12,-1],["Gigalithe",5,0,12,-1],["Chovsourir",5,0,10,9],["Rhinolove",5,0,10,9],["Rototaupe",5,0,8,-1],["Minotaupe",5,0,8,16],["Nanméouïe",5,0,0,-1],["Charpenti",5,0,6,-1],["Ouvrifier",5,0,6,-1],["Bétochef",5,0,6,-1],["Tritonde",5,0,2,-1],["Batracné",5,0,2,8],["Crapustule",5,0,2,8],["Judokrak",5,0,6,-1],["Karaclée",5,0,6,-1],["Larveyette",5,0,11,4],["Couverdure",5,0,11,4],["Manternel",5,0,11,4],["Venipatte",5,0,11,7],["Scobolide",5,0,11,7],["Brutapode",5,0,11,7],["Doudouvet",5,0,4,17],["Farfaduvet",5,0,4,17],["Chlorobule",5,0,4,-1],["Fragilady",5,0,4,-1],["Bargantua",5,0,2,-1],["Mascaïman",5,0,8,15],["Escroco",5,0,8,15],["Crocorible",5,0,8,15],["Darumarond",5,0,1,-1],["Darumacho",5,0,1,-1],["Maracachi",5,0,4,-1],["Crabicoque",5,0,11,12],["Crabaraque",5,0,11,12],["Baggiguane",5,0,15,6],["Baggaïd",5,0,15,6],["Cryptéro",5,0,10,9],["Tutafeh",5,0,13,-1],["Tutankafer",5,0,13,-1],["Carapagos",5,0,2,12],["Mégapagos",5,0,2,12],["Arkéapti",5,0,12,9],["Aéroptéryx",5,0,12,9],["Miamiasme",5,0,7,-1],["Miasmax",5,0,7,-1],["Zorua",5,0,15,-1],["Zoroark",5,0,15,-1],["Chinchidou",5,0,0,-1],["Pashmilla",5,0,0,-1],["Scrutella",5,0,10,-1],["Mesmérella",5,0,10,-1],["Sidérella",5,0,10,-1],["Nucléos",5,0,10,-1],["Méios",5,0,10,-1],["Symbios",5,0,10,-1],["Couaneton",5,0,2,9],["Lakmécygne",5,0,2,9],["Sorbébé",5,0,5,-1],["Sorboul",5,0,5,-1],["Sorbouboul",5,0,5,-1],["Vivaldaim",5,0,0,4],["Haydaim",5,0,0,4],["Emolga",5,0,3,9],["Carabing",5,0,11,-1],["Lançargot",5,0,11,16],["Trompignon",5,0,4,7],["Gaulet",5,0,4,7],["Viskuse",5,0,2,13],["Moyade",5,0,2,13],["Mamanbo",5,0,2,-1],["Statitik",5,0,11,3],["Mygavolt",5,0,11,3],["Grindur",5,0,4,16],["Noacier",5,0,4,16],["Tic",5,0,16,-1],["Clic",5,0,16,-1],["Cliticlic",5,0,16,-1],["Anchwatt",5,0,3,-1],["Lampéroie",5,0,3,-1],["Ohmassacre",5,0,3,-1],["Lewsor",5,0,10,-1],["Neitram",5,0,10,-1],["Funécire",5,0,13,1],["Mélancolux",5,0,13,1],["Lugulabre",5,0,13,1],["Coupenotte",5,0,14,-1],["Incisache",5,0,14,-1],["Tranchodon",5,0,14,-1],["Polarhume",5,0,5,-1],["Polagriffe",5,0,5,-1],["Hexagel",5,0,5,-1],["Escargaume",5,0,11,-1],["Limaspeed",5,0,11,-1],["Limonde",5,0,8,3],["Kungfouine",5,0,6,-1],["Shaofouine",5,0,6,-1],["Drakkarmin",5,0,14,-1],["Gringolem",5,0,8,13],["Golemastoc",5,0,8,13],["Scalpion",5,0,15,16],["Scalproie",5,0,15,16],["Frison",5,0,0,-1],["Furaiglon",5,0,0,9],["Gueriaigle",5,0,0,9],["Vostourno",5,0,15,9],["Vaututrice",5,0,15,9],["Aflamanoir",5,0,1,-1],["Fermite",5,0,11,16],["Solochi",5,0,15,14],["Diamat",5,0,15,14],["Trioxhydre",5,0,15,14],["Pyronille",5,0,11,1],["Pyrax",5,0,11,1],["Cobaltium",5,1,16,6],["Terrakium",5,1,12,6],["Viridium",5,1,4,6],["Boréas",5,1,9,-1],["Fulguris",5,1,3,9],["Reshiram",5,1,14,1],["Zekrom",5,1,14,3],["Démétéros",5,1,8,9],["Kyurem",5,1,14,5],["Keldeo",5,2,2,6],["Meloetta",5,2,0,10],["Genesect",5,2,11,16],["Marisson",6,0,4,-1],["Boguérisse",6,0,4,-1],["Blindépique",6,0,4,6],["Feunnec",6,0,1,-1],["Roussil",6,0,1,-1],["Goupelin",6,0,1,10],["Grenousse",6,0,2,-1],["Croâporal",6,0,2,-1],["Amphinobi",6,0,2,15],["Sapereau",6,0,0,-1],["Excavarenne",6,0,0,8],["Passerouge",6,0,0,9],["Braisillon",6,0,1,9],["Flambusard",6,0,1,9],["Lépidonille",6,0,11,-1],["Pérégrain",6,0,11,-1],["Prismillon",6,0,11,9],["Hélionceau",6,0,1,0],["Némélios",6,0,1,0],["Flabébé",6,0,17,-1],["Floette",6,0,17,-1],["Florges",6,0,17,-1],["Cabriolaine",6,0,4,-1],["Chevroum",6,0,4,-1],["Pandespiègle",6,0,6,-1],["Pandarbare",6,0,6,15],["Couafarel",6,0,0,-1],["Psystigri",6,0,10,-1],["Mistigrix",6,0,10,-1],["Monorpale",6,0,16,13],["Dimoclès",6,0,16,13],["Exagide",6,0,16,13],["Fluvetin",6,0,17,-1],["Cocotine",6,0,17,-1],["Sucroquin",6,0,17,-1],["Cupcanaille",6,0,17,-1],["Sepiatop",6,0,15,10],["Sepiatroce",6,0,15,10],["Opermine",6,0,12,2],["Golgopathe",6,0,12,2],["Venalgue",6,0,7,2],["Kravarech",6,0,7,14],["Flingouste",6,0,2,-1],["Gamblast",6,0,2,-1],["Galvaran",6,0,3,0],["Iguolta",6,0,3,0],["Ptyranidur",6,0,12,14],["Rexillius",6,0,12,14],["Amagara",6,0,12,5],["Dragmara",6,0,12,5],["Nymphali",6,0,17,-1],["Brutalibré",6,0,6,9],["Dedenne",6,0,3,17],["Strassie",6,0,12,17],["Mucuscule",6,0,14,-1],["Colimucus",6,0,14,-1],["Muplodocus",6,0,14,-1],["Trousselin",6,0,16,17],["Brocélôme",6,0,13,4],["Desséliande",6,0,13,4],["Pitrouille",6,0,13,4],["Banshitrouye",6,0,13,4],["Grelaçon",6,0,5,-1],["Séracrawl",6,0,5,-1],["Sonistrelle",6,0,9,14],["Bruyverne",6,0,9,14],["Xerneas",6,1,17,-1],["Yveltal",6,1,15,9],["Zygarde",6,1,14,8],["Diancie",6,2,12,17],["Hoopa",6,2,10,13],["Volcanion",6,2,1,2],["Brindibou",7,0,4,9],["Efflèche",7,0,4,9],["Archéduc",7,0,4,13],["Flamiaou",7,0,1,-1],["Matoufeu",7,0,1,-1],["Félinferno",7,0,1,15],["Otaquin",7,0,2,-1],["Otarlette",7,0,2,-1],["Oratoria",7,0,2,17],["Picassaut",7,0,0,9],["Piclairon",7,0,0,9],["Bazoucan",7,0,0,9],["Manglouton",7,0,0,-1],["Argouste",7,0,0,-1],["Larvibule",7,0,11,-1],["Chrysapile",7,0,11,3],["Lucanon",7,0,11,3],["Crabagarre",7,0,6,-1],["Crabominable",7,0,6,5],["Plumeline",7,0,1,9],["Bombydou",7,0,11,17],["Rubombelle",7,0,11,17],["Rocabot",7,0,12,-1],["Lougaroc",7,0,12,-1],["Froussardine",7,0,2,-1],["Vorastérie",7,0,7,2],["Prédastérie",7,0,7,2],["Tiboudet",7,0,8,-1],["Bourrinos",7,0,8,-1],["Araqua",7,0,2,11],["Tarenbulle",7,0,2,11],["Mimantis",7,0,4,-1],["Floramantis",7,0,4,-1],["Spododo",7,0,4,17],["Lampignon",7,0,4,17],["Tritox",7,0,7,1],["Malamandre",7,0,7,1],["Nounourson",7,0,0,6],["Chelours",7,0,0,6],["Croquine",7,0,4,-1],["Candine",7,0,4,-1],["Sucreine",7,0,4,-1],["Guérilande",7,0,17,-1],["Gouroutan",7,0,0,10],["Quartermac",7,0,6,-1],["Sovkipou",7,0,11,2],["Sarmuraï",7,0,11,2],["Bacabouh",7,0,13,8],["Trépassable",7,0,13,8],["Concombaffe",7,0,2,-1],["Type:0",7,1,0,-1],["Silvallié",7,1,0,-1],["Météno",7,0,12,9],["Dodoala",7,0,0,-1],["Boumata",7,0,1,14],["Togedemaru",7,0,3,16],["Mimiqui",7,0,13,17],["Denticrisse",7,0,2,10],["Draïeul",7,0,0,14],["Sinistrail",7,0,13,4],["Bébécaille",7,0,14,-1],["Écaïd",7,0,14,6],["Ékaïser",7,0,14,6],["Tokorico",7,1,3,17],["Tokopiyon",7,1,10,17],["Tokotoro",7,1,4,17],["Tokopisco",7,1,2,17],["Cosmog",7,1,10,-1],["Cosmovum",7,1,10,-1],["Solgaleo",7,1,10,16],["Lunala",7,1,10,13],["Zéroïd",7,0,12,7],["Mouscoto",7,0,11,6],["Cancrelove",7,0,11,6],["Câblifère",7,0,3,-1],["Bamboiselle",7,0,16,9],["Katagami",7,0,4,16],["Engloutyran",7,0,15,14],["Necrozma",7,1,10,-1],["Magearna",7,2,16,17],["Marshadow",7,2,6,13],["Vémini",7,0,7,-1],["Mandrillon",7,0,7,14],["Ama-Ama",7,0,12,16],["Pierroteknik",7,0,1,13],["Zeraora",7,2,3,-1],["Meltan",7,2,16,-1],["Melmetal",7,2,16,-1],["Ouistempo",8,0,4,-1],["Badabouin",8,0,4,-1],["Gorythmic",8,0,4,-1],["Flambino",8,0,1,-1],["Lapyro",8,0,1,-1],["Pyrobut",8,0,1,-1],["Larméléon",8,0,2,-1],["Arrozard",8,0,2,-1],["Lézargus",8,0,2,-1],["Rongourmand",8,0,0,-1],["Rongrigou",8,0,0,-1],["Minisange",8,0,9,-1],["Bleuseille",8,0,9,-1],["Corvaillus",8,0,9,16],["Larvadar",8,0,11,-1],["Coléodôme",8,0,11,10],["Astronelle",8,0,11,10],["Goupilou",8,0,15,-1],["Roublenard",8,0,15,-1],["Tournicoton",8,0,4,-1],["Blancoton",8,0,4,-1],["Moumouton",8,0,0,-1],["Moumouflon",8,0,0,-1],["Khélocrok",8,0,2,-1],["Torgamord",8,0,2,12],["Voltoutou",8,0,3,-1],["Fulgudog",8,0,3,-1],["Charbi",8,0,12,-1],["Wagomine",8,0,12,1],["Monthracite",8,0,12,1],["Verpom",8,0,4,14],["Pomdrapi",8,0,4,14],["Dratatin",8,0,4,14],["Dunaja",8,0,8,-1],["Dunaconda",8,0,8,-1],["Nigosier",8,0,9,2],["Embrochet",8,0,2,-1],["Hastacuda",8,0,2,-1],["Toxizap",8,4,3,7],["Salarsen",8,0,3,7],["Grillepattes",8,0,1,11],["Scolocendre",8,0,1,11],["Poulpaf",8,0,6,-1],["Krakos",8,0,6,-1],["Théffroi",8,0,13,-1],["Polthégeist",8,0,13,-1],["Bibichut",8,0,10,-1],["Chapotus",8,0,10,-1],["Sorcilence",8,0,10,17],["Grimalin",8,0,15,17],["Fourbelin",8,0,15,17],["Angoliath",8,0,15,17],["Ixon",8,0,15,0],["Berserkatt",8,0,16,-1],["Corayôme",8,0,13,-1],["Palarticho",8,0,6,-1],["M. Glaquette",8,0,5,10],["Tutétékri",8,0,8,13],["Crèmy",8,0,17,-1],["Charmilly",8,0,17,-1],["Hexadron",8,0,6,-1],["Wattapik",8,0,3,-1],["Frissonille",8,0,5,11],["Beldeneige",8,0,5,11],["Dolman",8,0,12,-1],["Bekaglaçon",8,0,5,-1],["Wimessir",8,0,10,0],["Morpeko",8,0,3,15],["Charibari",8,0,16,-1],["Pachyradjah",8,0,16,-1],["Galvagon",8,0,3,14],["Galvagla",8,0,3,5],["Hydragon",8,0,2,14],["Hydragla",8,0,2,5],["Duralugon",8,0,16,14],["Fantyrm",8,0,14,13],["Dispareptil",8,0,14,13],["Lanssorien",8,0,14,13],["Zacian",8,1,17,-1],["Zamazenta",8,1,6,-1],["Éthernatos",8,1,7,14],["Wushours",8,1,6,-1],["Shifours",8,1,6,15],["Zarude",8,2,15,4],["Regieleki",8,1,3,-1],["Regidrago",8,1,14,-1],["Blizzeval",8,1,5,-1],["Spectreval",8,1,13,-1],["Sylveroy",8,1,10,4],["Cerbyllin",8,0,0,10],["Hachécateur",8,0,11,12],["Ursaking",8,0,8,0],["Paragruel",8,0,2,13],["Farfurex",8,0,6,7],["Qwilpik",8,0,15,7],["Amovénus",8,1,17,9],["Poussacha",9,0,4,-1],["Matourgeon",9,0,4,-1],["Miascarade",9,0,4,15],["Chochodile",9,0,1,-1],["Crocogril",9,0,1,-1],["Flâmigator",9,0,1,13],["Coiffeton",9,0,2,-1],["Canarbello",9,0,2,-1],["Palmaval",9,0,2,6],["Gourmelet",9,0,0,-1],["Fragroin",9,0,0,-1],["Tissenboule",9,0,11,-1],["Filentrappe",9,0,11,-1],["Lilliterelle",9,0,11,-1],["Gambex",9,0,11,15],["Pohm",9,0,3,-1],["Pohmotte",9,0,3,6],["Pohmarmotte",9,0,3,6],["Compagnol",9,0,0,-1],["Famignol",9,0,0,-1],["Pâtachiot",9,0,17,-1],["Briochien",9,0,17,-1],["Olivini",9,0,4,0],["Olivado",9,0,4,0],["Arboliva",9,0,4,0],["Tapatoès",9,0,0,9],["Selutin",9,0,12,-1],["Amassel",9,0,12,-1],["Gigansel",9,0,12,-1],["Charbambin",9,0,1,-1],["Carmadura",9,0,1,10],["Malvalame",9,0,1,13],["Têtampoule",9,0,3,-1],["Ampibidou",9,0,3,-1],["Zapétrel",9,0,3,9],["Fulgulairo",9,0,3,9],["Grondogue",9,0,15,-1],["Dogrino",9,0,15,-1],["Gribouraigne",9,0,7,0],["Tag-Tag",9,0,7,0],["Virovent",9,0,4,13],["Virevorreur",9,0,4,13],["Terracool",9,0,8,4],["Terracruel",9,0,8,4],["Craparoi",9,0,12,-1],["Pimito",9,0,4,-1],["Scovilain",9,0,4,1],["Léboulérou",9,0,11,-1],["Bérasca",9,0,11,10],["Flotillon",9,0,10,-1],["Cléopsytra",9,0,10,-1],["Forgerette",9,0,17,16],["Forgella",9,0,17,16],["Forgelina",9,0,17,16],["Taupikeau",9,0,2,-1],["Triopikeau",9,0,2,-1],["Lestombaile",9,0,9,15],["Dofin",9,0,2,-1],["Superdofin",9,0,2,-1],["Vrombi",9,0,16,7],["Vrombotor",9,0,16,7],["Motorizard",9,0,14,0],["Ferdeter",9,0,16,-1],["Germéclat",9,0,12,7],["Floréclat",9,0,12,7],["Toutombe",9,0,13,-1],["Tomberro",9,0,13,-1],["Flamenroule",9,0,9,6],["Piétacé",9,0,5,-1],["Balbalèze",9,0,5,-1],["Délestin",9,0,2,10],["Oyacata",9,0,2,-1],["Nigirigon",9,0,14,2],["Courrousinge",9,0,6,13],["Terraiste",9,0,7,8],["Farigiraf",9,0,0,10],["Deusolourdo",9,0,0,-1],["Scalpereur",9,0,15,16],["Fort-Ivoire",9,0,8,6],["Hurle-Queue",9,0,17,10],["Fongus-Furie",9,0,4,15],["Flotte-Mèche",9,0,13,17],["Rampe-Ailes",9,0,11,6],["Pelage-Sablé",9,0,3,8],["Roue-de-Fer",9,0,8,16],["Hotte-de-Fer",9,0,5,2],["Paume-de-Fer",9,0,6,3],["Têtes-de-Fer",9,0,15,9],["Mite-de-Fer",9,0,1,7],["Épine-de-Fer",9,0,12,3],["Frigodo",9,0,14,5],["Cryodo",9,0,14,5],["Glaivodo",9,0,14,5],["Mordudor",9,0,13,-1],["Gromago",9,0,16,13],["Chongjian",9,1,15,4],["Baojian",9,1,15,5],["Dinglu",9,1,15,8],["Yuyu",9,1,15,1],["Rugit-Lune",9,0,14,15],["Garde-de-Fer",9,0,17,6],["Koraidon",9,1,6,14],["Miraidon",9,1,3,14],["Serpente-Eau",9,0,2,14],["Vert-de-Fer",9,0,4,10],["Pomdramour",9,0,4,14],["Poltchageist",9,0,4,13],["Théffroyable",9,0,4,13],["Félicanis",9,1,7,6],["Fortusimia",9,1,7,10],["Favianos",9,1,7,17],["Ogerpon",9,1,4,-1],["Pondralugon",9,0,16,14],["Pomdorochi",9,0,4,14],["Feu-Perçant",9,0,1,14],["Ire-Foudre",9,0,3,14],["Roc-de-Fer",9,0,12,10],["Chef-de-Fer",9,0,16,10],["Terapagos",9,1,0,-1],["Pêchaminus",9,2,7,13]];
+const SEED={"shiny":{"usum_l":"10,18,22,24,37,91,136,195-196,219,244,271,274,277,334,385,419,427,446,450,452,469,479,491-492,531,558,561,581,618,624,645,689,695,718,785,795,799","sm_s":"167","go":"4-6,13-18,21-22,25,37-38,63-65,74-76,123,125-126,129-130,133,147-149,179-181,197,227,251,265-267,318-320,329-330,380,410-411,425-428,467,495-498,509-510,543-545,551,607-609,661-663,667-668,686-687,710,722-724,747,821-823,856-858,915-916,928-930,973","sv_e":"878-879,932-934,968","za":"16-17,66,69,93,147-149,179-181,322-323,361,374-375,459-460,543,568,582,607,659,661,667-669,674,677,679,689,702,715"},"missing":"17,29-30,33-34,65,68,71,94,139,141,156-157,160,164,173-174,182,186,195,213,232,236,238-239,249,251-254,260,277,282,290,298,308,314,317,346-348,360,362,367,373,376,380,389,392,395,406,409,411,414,423,433,439-440,446,457,467,481,485,487,489,493-494,496-497,500,503,518,563,565,567,579,584,586,591,606,638-639,647,655,673,692-693,709,716,720,749-750,764,772-773,783-785,787-788,791-795,797-801,803-807,815,829,832-834,837,839,842,845-847,851,853,858,860-867,872-874,880-886,888-889,892,896-899,901,903,905,908,913,927,930,939,948,959,970,974,979,983-985,987,989-990,992,995,1000-1002,1004-1011,1013-1025","journal":[{"label":"Cartes de départ","date":null,"counts":{"g1":268,"g2":123,"g3":171,"g4":109,"g5":242,"g6":118,"g7":79,"g8":44,"g9":39,"doubles":70,"ultra":37,"vieilles":74,"dresseurs":109,"e_eau":26,"e_plante":29,"e_feu":10,"e_elec":25,"e_combat":25,"e_psy":21,"e_obscur":24,"e_acier":17,"e_fee":10,"e_incolore":5,"jcc":87}},{"label":"Paquet d’Alexys","date":null,"counts":{"g1":12,"g2":4,"g3":5,"g4":7,"g5":11,"g6":5,"g7":2,"doubles":30,"ultra":1,"vieilles":6,"e_fee":1,"e_incolore":1}},{"label":"Donné à Alicia","date":null,"counts":{"doubles":-12,"jcc":1}},{"label":"2 boosters","date":"2026-07-10","counts":{"g1":2,"g2":2,"g3":1,"g5":1,"g6":7,"doubles":3,"ultra":2,"dresseurs":2,"e_plante":1,"e_psy":1,"jcc":3}},{"label":"Paquet Alexis","date":"2026-07-10","counts":{"g1":12,"g2":16,"g3":17,"g4":10,"g5":9,"g6":4,"g7":7,"g8":18,"g9":40}},{"label":"8 boosters","date":"2026-07-14","counts":{"g1":4,"g2":7,"g3":12,"g4":5,"g5":3,"g6":8,"g7":5,"g8":1,"g9":4,"doubles":22,"ultra":3,"dresseurs":8,"e_plante":2,"e_feu":1,"e_combat":2,"e_psy":1,"e_obscur":2,"e_acier":1,"jcc":8}},{"label":"Échangé à Mattis","date":"2026-08-08","counts":{"g1":6,"g2":2,"g3":4,"g4":1,"g5":3,"g6":3,"doubles":-15}},{"label":"2 boosters","date":"2026-08-14","counts":{"g1":1,"g3":2,"g4":2,"g5":2,"g6":3,"g7":5,"g8":2,"doubles":3,"ultra":1,"e_feu":1,"e_psy":1,"jcc":2}},{"label":"Classeur Mattis","date":"2026-08-23","counts":{"g1":11,"g2":4,"g3":6,"g4":8,"g5":7,"g6":4,"g7":6,"g8":1,"g9":1,"doubles":20}},{"label":"Brocante Trangé","date":"2026-09-06","counts":{"g1":52,"g2":43,"g3":49,"g4":40,"g5":42,"g6":23,"g7":13,"g8":20,"g9":19,"doubles":91,"dresseurs":76,"e_incolore":4}}]};
+const GAMES = [
+  { id: "rb", label: "Rouge / Bleu", gen: 1, noShiny: true, ids: "1-151" },
+  { id: "y", label: "Jaune", gen: 1, noShiny: true, ids: "1-151" },
+  { id: "gs", label: "Or / Argent", gen: 2, ids: "1-251" },
+  { id: "c", label: "Cristal", gen: 2, ids: "1-251" },
+  { id: "rs", label: "Rubis / Saphir", gen: 3, ids: "25-28,37-45,54-55,63-68,72-76,81-82,84-85,88-89,100-101,109-112,116-121,127,129-130,169-172,174,177-178,182-184,202-203,214,218-219,222,227,230-232,252-386" },
+  { id: "e", label: "Émeraude", gen: 3, ids: "25-28,37-45,54-55,63-68,72-76,81-82,84-85,88-89,100-101,109-112,116-121,127,129-130,169-172,174,177-178,182-184,202-203,214,218-219,222,227,230-232,252-386" },
+  { id: "frlg", label: "Rouge Feu / Vert Feuille", gen: 3, ids: "1-151" },
+  { id: "dp", label: "Diamant / Perle", gen: 4, ids: "25-26,35-36,41-42,54-55,63-68,72-78,92-95,113,118-119,122,129-130,143,163-164,169,172-173,183-185,190,194-195,198,200-201,203,208,214-215,223-224,226,242,265-269,278-279,298,307-308,315,339-340,349-350,358,387-461,480-484,490" },
+  { id: "pt", label: "Platine", gen: 4, ids: "25-26,35-36,41-42,54-55,63-68,72-78,81-82,92-95,108,111-114,118-119,122-123,125-126,129-130,133-137,143,163-164,169,172-173,175-176,183-185,190,193-198,200-201,203,207-208,212,214-215,220-221,223-224,226,228-229,233,239-240,242,265-269,278-282,298-299,307-308,315,333-334,339-340,349-350,355-359,361-362,387-484,487,490" },
+  { id: "hgss", label: "HeartGold / SoulSilver", gen: 4, ids: "1-251,424,463,465,469,473" },
+  { id: "bw", label: "Noir / Blanc", gen: 5, ids: "494-649" },
+  { id: "b2w2", label: "Noir 2 / Blanc 2", gen: 5, ids: "19-20,27-28,35-42,54-55,58-59,81-82,86-89,95,108-110,114,120-121,125-127,131-136,169,173-174,179-181,183-184,191-193,196-197,206-208,213-215,220-227,239-240,246-248,278-279,287-289,298-301,304-306,315,320-323,325-326,328-330,333-338,341-344,351,353-354,357,359,363-365,374-376,406-407,415-416,418-419,425-428,436-437,447-448,451-455,458,461-463,465-467,469-473,476,494-649" },
+  { id: "xy", label: "X / Y", gen: 6, ids: "1-18,21-34,39-45,50-51,54-55,60-76,79-85,90-95,100-105,108,111-112,115-124,127-136,142-150,161-172,174,179-189,193-199,202,206-230,235,238,241,246-248,261-264,270-272,276-284,290-321,324-330,333-342,352-354,358-360,366-373,396-400,406-407,412-419,425-426,430,433-435,438-439,441,443-455,458-464,469-473,475-476,479,504-505,509-516,524-528,531-534,538-539,543-545,550-553,557-561,568-571,574-584,587-591,594,597-598,607-625,631-635,650-721" },
+  { id: "oras", label: "Rubis Oméga / Saphir Alpha", gen: 6, ids: "25-28,37-45,54-55,63-68,72-76,81-82,84-85,88-89,100-101,109-112,116-121,127,129-130,169-172,174,177-178,182-184,202-203,214,218-219,222,227,230-232,252-386,406-407,433,462,464,475-478" },
+  { id: "sm", label: "Soleil / Lune", gen: 7, ids: "10-12,19-22,25-28,35-42,46-47,50-68,72-76,79-82,88-94,96-97,102-105,113,115,118-121,123,125-137,142-143,147-149,165-174,185-186,196-200,209-210,212,215,222,225,227,233,235,239-242,278-279,283-284,296-297,299,302,318-321,324,327-330,339-340,349-351,359,361-362,369-376,408-411,422-423,425-426,429-430,438,440,443-448,456-457,461-462,466-467,470-471,474,476,478,506-508,524-526,546-549,551-553,564-569,582-584,587,594,627-630,661-663,674-675,700,703-709,718,722-802" },
+  { id: "usum", label: "Ultra-Soleil / Ultra-Lune", gen: 7, ids: "10-12,19-28,35-42,46-47,50-68,72-76,79-82,86-94,96-97,102-105,108,113,115,118-143,147-149,163-174,177-181,185-186,190,196-200,204-206,209-210,212,214-215,222-229,233,235,238-242,246-248,278-279,283-284,296-297,299,302-303,309-310,318-321,324,327-330,339-354,357,359,361-362,366-376,408-411,422-430,438-440,443-448,456-458,461-463,466-467,470-471,474,476,478,506-508,524-526,546-553,559-560,564-573,582-584,587,592-594,605-606,619-625,627-630,636-637,661-663,667-671,674-676,686-687,690-693,696-709,714-715,718,722-807" },
+  { id: "lgpe", label: "Let’s Go Pikachu / Évoli", gen: 7, ids: "1-151,808-809" },
+  { id: "swsh", label: "Épée / Bouclier", gen: 8, ids: "4-6,10-12,25-26,35-38,43-45,50-53,58-59,66-68,77-78,83,90-95,98-99,106-107,109-112,118-119,122,129-136,143,163-164,170-173,175-178,182,185,194-197,202,208,211,213,215,220-226,236-237,246-248,263-264,270-275,278-282,290-292,302-303,309-310,315,320-321,324,328-330,337-344,349-350,355-356,360-362,406-407,415-416,420-423,425-426,434-439,446-454,458-461,464,468,470-471,473,475,477-479,509-510,517-521,524-530,532-539,546-547,550,554-563,568-569,572-579,582-584,588-589,592-593,595-601,605-614,616-618,622-625,627-635,659-660,674-675,677-689,694-695,700-701,704-706,708-715,736-738,742-743,746-752,755-763,765-768,771-773,776-778,780-784,810-890" },
+  { id: "ioa", label: "L’île solitaire de l’Armure (DLC)", gen: 8, ids: "1-3,7-9,25-28,39-40,54-55,60-65,72-73,79-82,90-91,98-99,102-105,108,111-121,123,127-130,132,137,170-172,174,183-184,186,194-195,199,206,212,214,223-224,226-227,230,233,241-242,278-282,293-295,298,318-321,324,339-342,403-405,415-416,425-428,440,451-454,458,462-465,474-475,506-508,524-528,543-545,548-549,551-553,557-560,570-571,587-593,616-617,619-621,624-630,636-637,661-663,686-687,690-693,702,704-707,744-748,753-754,757-758,764-770,782-784,819-820,824-826,833-834,840-847,852-853,871,877,891-893" },
+  { id: "ct", label: "Les terres enneigées de la Couronne (DLC)", gen: 8, ids: "29-36,41-42,77-78,122,124-126,129-131,133-136,138-149,169,173,196-197,213,215,220-221,225,238-240,246-248,263-264,302-306,333-334,339-340,343-350,359,361-365,369,371-379,436-437,439,442-448,459-461,466-467,470-471,473,478,531-534,546-547,550,554-555,564-567,574-579,582-584,588-589,595-598,607-609,613-617,621-623,631-635,638-640,696-700,703,708-709,712-715,751-752,778,781,819-823,829-832,835-839,850-851,854-862,866,871-879,885-887,894-898" },
+  { id: "bdsp", label: "Diamant Étincelant / Perle Scintillante", gen: 8, ids: "1-493" },
+  { id: "pla", label: "Légendes : Arceus", gen: 8, ids: "25-26,35-38,41-42,46-47,54-55,58-59,63-68,72-78,81-82,92-95,100-101,108,111-114,122-123,125-126,129-130,133-137,143,155-157,169,172-173,175-176,185,190,193,196-198,200-201,207-208,211-212,214-217,220-221,223-224,226,233-234,239-240,242,265-269,280-282,299,315,339-340,355-356,358,361-365,387-493,501-503,548-550,570-571,627-628,641-642,645,700,704-706,712-713,722-724,899-905" },
+  { id: "sv", label: "Écarlate / Violet", gen: 9, ids: "25-26,39-40,48-59,79-82,88-94,96-97,100-101,113,123,128-130,132-136,147-149,172,174,179-181,183-185,187-189,191-192,194,196-200,203-206,211-212,214-217,225,228-229,231-232,234,242,246-248,278-289,296-298,302,307-308,316-317,322-326,331-336,339-340,353-354,357,361-362,370-373,396-398,401-405,415-419,422-423,425-426,429-430,434-438,440,442-445,447-450,453-454,456-457,459-462,470-471,475,478-479,548-553,570-571,574-576,585-586,590-591,594,602-604,610-615,624-625,627-628,633-637,661-673,690-693,700-702,704-707,712-715,734-735,739-741,744-745,747-750,753-754,757-758,761-763,765-766,769-770,775,778-779,819-823,833-834,837-844,846-849,854-861,870-876,878-879,885-887,906-1008" },
+  { id: "tm", label: "Le Masque turquoise (DLC)", gen: 9, ids: "23-28,35-38,56-62,69-71,74-76,92-94,109-110,129-130,143,161-164,167-168,172-173,185-186,190,193-195,206-207,214-215,218-221,228-229,234,261-262,270-275,280-284,299,313-314,325-326,339-342,349-350,355-356,358,361-362,396-398,401-405,417,424,433,436-438,443-448,461,469,472-473,475-478,532-534,540-542,548-550,580-581,602-604,607-609,619-620,624-625,629-630,703-706,708-709,714-715,736-738,741-745,749-750,753-754,757-758,778,782-784,819-820,833-834,840-842,845-847,856-861,876-877,901-902,924-925,948-949,962,968-970,979,982-983,1011-1017" },
+  { id: "id", label: "Le Disque indigo (DLC)", gen: 9, ids: "1-9,27-28,37-38,43-45,48-51,72-76,79-82,84-89,102-103,106-107,111-113,116-117,123,125-126,128,131,137,152-160,170-171,182,199,203,209-212,227,230,233,235-237,239-240,242,252-260,287-289,311-312,322-324,328-330,333-336,370,374-376,387-395,408-411,440,456-457,459-460,462,464,466-467,474,479,495-503,522-523,529-530,546-547,551-553,559-560,572-579,585-586,594-596,602-604,610-614,622-623,627-630,650-658,661-663,667-668,677-678,686-687,722-733,739-741,751-752,764,774,779,810-818,854-855,868-869,884,900,904,953-954,981,1009-1010,1018-1025" },
+  { id: "za", label: "Légendes : Z-A", gen: 9, ids: "1-9,13-18,23-26,35-36,63-71,79-80,92-95,115,120-121,123,127,129-130,133-136,142,147-150,152-154,158-160,167-168,172-173,179-181,196-197,199,208,212,214,225,227-229,246-248,280-282,302-310,315,318-319,322-323,333-334,353-354,359,361-362,371-376,406-407,427-428,443-445,447-450,459-460,470-471,475,478,498-500,504-505,511-516,529-531,543-545,551-553,559-560,568-569,582-584,587,602-604,607-609,618,650-719,780,870" },
+  { id: "md", label: "Méga-Dimension (DLC)", gen: 9, ids: "39-42,52-53,56-57,83,104-105,122,137,169,174,211,233,252-260,316-317,325-326,335-336,349-350,352,358,380-384,396-398,433,439,474,479,485,491,509-510,517-518,538-539,562-563,590-591,615,622-623,638-640,647-649,720-721,739-740,767-770,778,801-802,807-809,821-823,827-828,848-849,852-853,863,865-867,876-877,900,904,926-927,931-937,942-945,951-952,957-959,967,969-973,977-979,996-1000" },
+];
+
+"use strict";
+/* ============================================================
+   Pokéhub — roue, shiny, cartes, sauvegardes.
+   Tout fonctionne hors-ligne : les données sont dans ce fichier.
+   ============================================================ */
+
+/* ---------- Utilitaires ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const TAU = Math.PI * 2;
+const NMAX = 1025;
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+const validId = id => Number.isInteger(id) && id >= 1 && id <= NMAX;
+const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const plural = (n, one, many) => `${n} ${n > 1 ? many : one}`;
+
+function parseRanges(str) {
+  const set = new Set();
+  if (!str) return set;
+  for (const part of str.split(",")) {
+    const [a, b] = part.split("-").map(Number);
+    for (let i = a; i <= (b ?? a); i++) set.add(i);
+  }
+  return set;
+}
+function randFloat() { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] / 4294967296; }
+function randInt(n) { return Math.floor(randFloat() * n); }
+const uid = () => Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+
+/* ---------- Données Pokémon ---------- */
+const TYPE_ORDER = ["normal", "fire", "water", "electric", "grass", "ice", "fighting", "poison", "ground", "flying", "psychic", "bug", "rock", "ghost", "dragon", "dark", "steel", "fairy"];
+const TYPES = {
+  normal: { fr: "Normal", color: "#A8A77A" }, fire: { fr: "Feu", color: "#EE8130" }, water: { fr: "Eau", color: "#6390F0" },
+  electric: { fr: "Électrik", color: "#F7D02C" }, grass: { fr: "Plante", color: "#7AC74C" }, ice: { fr: "Glace", color: "#96D9D6" },
+  fighting: { fr: "Combat", color: "#C22E28" }, poison: { fr: "Poison", color: "#A33EA1" }, ground: { fr: "Sol", color: "#E2BF65" },
+  flying: { fr: "Vol", color: "#A98FF3" }, psychic: { fr: "Psy", color: "#F95587" }, bug: { fr: "Insecte", color: "#A6B91A" },
+  rock: { fr: "Roche", color: "#B6A136" }, ghost: { fr: "Spectre", color: "#735797" }, dragon: { fr: "Dragon", color: "#6F35FC" },
+  dark: { fr: "Ténèbres", color: "#705746" }, steel: { fr: "Acier", color: "#B7B7CE" }, fairy: { fr: "Fée", color: "#D685AD" },
+};
+const FALLBACK_COLOR = "#8a8aa0";
+const GEN_NAMES = { 1: "Kanto", 2: "Johto", 3: "Hoenn", 4: "Sinnoh", 5: "Unys", 6: "Kalos", 7: "Alola", 8: "Galar", 9: "Paldea" };
+const STARTER_RANGES = [[1, 9], [152, 160], [252, 260], [387, 395], [495, 503], [650, 658], [722, 730], [810, 818], [906, 914]];
+const isStarter = id => STARTER_RANGES.some(([a, b]) => id >= a && id <= b);
+
+const POKEMON = RAW.map((r, i) => ({
+  id: i + 1, name: r[0], gen: r[1],
+  legendary: !!(r[2] & 1), mythical: !!(r[2] & 2), baby: !!(r[2] & 4),
+  types: [TYPE_ORDER[r[3]], r[4] >= 0 ? TYPE_ORDER[r[4]] : null].filter(Boolean),
+}));
+const P = id => POKEMON[id - 1];
+const primaryColor = p => TYPES[p.types[0]]?.color ?? FALLBACK_COLOR;
+function luminance(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+const textOn = hex => (luminance(hex) > 0.35 ? "#1b1b26" : "#ffffff");
+const typeBadges = p => p.types.map(t => { const T = TYPES[t]; return `<span class="badge" style="background:${T.color};color:${textOn(T.color)}">${T.fr}</span>`; }).join("");
+
+/* Vignettes : deux planches (normal / shiny), 32 colonnes de 72 px */
+const SPR_COLS = 32, SPR_PX = 72;
+function spr(id, size, shiny = false) {
+  const i = id - 1, x = (i % SPR_COLS) * size, y = Math.floor(i / SPR_COLS) * size;
+  return `width:${size}px;height:${size}px;background-image:url(${shiny ? "sprites-shiny.webp" : "sprites.webp"});background-size:${SPR_COLS * size}px auto;background-position:-${x}px -${y}px`;
+}
+const sprEl = (id, size, shiny = false) => `<span class="spr" style="${spr(id, size, shiny)}"></span>`;
+const ART = (id, shiny) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${shiny ? "shiny/" : ""}${id}.png`;
+
+/* ---------- Jeux et versions ---------- */
+const GAME_SETS = new Map(GAMES.map(g => [g.id, parseRanges(g.ids)]));
+GAME_SETS.set("go", new Set(Array.from({ length: NMAX }, (_, i) => i + 1)));
+const groupMeta = id => GAMES.find(g => g.id === id) || { id: "go", label: "Pokémon GO", gen: 0, noDex: true };
+const VSPEC = [
+  ["rb_r", "Rouge", "rb"], ["rb_b", "Bleu", "rb"], ["y", "Jaune", "y"],
+  ["gs_o", "Or", "gs"], ["gs_a", "Argent", "gs"], ["c", "Cristal", "c"],
+  ["rs_r", "Rubis", "rs"], ["rs_s", "Saphir", "rs"], ["e", "Émeraude", "e"], ["frlg_r", "Rouge Feu", "frlg"], ["frlg_v", "Vert Feuille", "frlg"],
+  ["dp_d", "Diamant", "dp"], ["dp_p", "Perle", "dp"], ["pt", "Platine", "pt"], ["hgss_h", "HeartGold", "hgss"], ["hgss_s", "SoulSilver", "hgss"],
+  ["bw_n", "Noir", "bw"], ["bw_b", "Blanc", "bw"], ["b2w2_n", "Noir 2", "b2w2"], ["b2w2_b", "Blanc 2", "b2w2"],
+  ["xy_x", "X", "xy"], ["xy_y", "Y", "xy"], ["oras_r", "Rubis Oméga", "oras"], ["oras_s", "Saphir Alpha", "oras"],
+  ["sm_s", "Soleil", "sm"], ["sm_l", "Lune", "sm"], ["usum_s", "Ultra-Soleil", "usum"], ["usum_l", "Ultra-Lune", "usum"],
+  ["lgpe_p", "Let’s Go Pikachu", "lgpe"], ["lgpe_e", "Let’s Go Évoli", "lgpe"],
+  ["swsh_e", "Épée", "swsh"], ["swsh_b", "Bouclier", "swsh"], ["ioa", "L’île solitaire de l’Armure", "ioa"], ["ct", "Les terres enneigées de la Couronne", "ct"],
+  ["bdsp_d", "Diamant Étincelant", "bdsp"], ["bdsp_p", "Perle Scintillante", "bdsp"], ["pla", "Légendes : Arceus", "pla"],
+  ["sv_e", "Écarlate", "sv"], ["sv_v", "Violet", "sv"], ["tm", "Le Masque turquoise", "tm"], ["id", "Le Disque indigo", "id"],
+  ["za", "Légendes : Z-A", "za"], ["md", "Méga-Dimension", "md"], ["go", "Pokémon GO", "go"],
+];
+const VERSIONS = VSPEC.map(([id, label, group]) => { const g = groupMeta(group); return { id, label, group, gen: g.gen, noShiny: !!g.noShiny, noDex: !!g.noDex }; });
+const VBY = Object.fromEntries(VERSIONS.map(v => [v.id, v]));
+const dexOf = vid => GAME_SETS.get(VBY[vid].group);
+const inDex = (vid, id) => dexOf(vid).has(id);
+const DEFAULT_COLS = ["usum_l", "sm_s", "go", "pla", "sv_e", "za"];
+const versionGroups = () => {                       // [[titre, [versions]]] pour les listes déroulantes
+  const m = new Map();
+  for (const v of VERSIONS) { if (!m.has(v.gen)) m.set(v.gen, []); m.get(v.gen).push(v); }
+  return [...m].map(([g, l]) => [g === 0 ? "Autres" : `Génération ${g} · ${GEN_NAMES[g]}`, l]);
+};
+
+/* ---------- Catégories du journal des cartes ---------- */
+const CAT_GROUPS = [
+  { title: "Par génération", cats: Object.keys(GEN_NAMES).map(g => ({ id: "g" + g, label: `Gen ${g}` })) },
+  { title: "Spéciales", cats: [{ id: "doubles", label: "Doubles" }, { id: "ultra", label: "Ultra-rares" }, { id: "vieilles", label: "Vieilles" }, { id: "dresseurs", label: "Dresseurs / Objets / Stades" }] },
+  { title: "Énergies par type", cats: [["e_eau", "Eau"], ["e_plante", "Plante"], ["e_feu", "Feu"], ["e_elec", "Électrique"], ["e_combat", "Combat"], ["e_psy", "Psy"], ["e_obscur", "Obscur"], ["e_acier", "Acier"], ["e_fee", "Fée"], ["e_incolore", "Incolore"]].map(([id, l]) => ({ id, label: l })) },
+  { title: "Cartes JCC", cats: [{ id: "jcc", label: "Cartes JCC", jcc: true }] },
+];
+const CATS = CAT_GROUPS.flatMap(g => g.cats);
+const CAT_IDS = new Set(CATS.map(c => c.id));
+
+/* ---------- Base locale ---------- */
+const DB_KEY = "pokehub:v1";
+const db = { shiny: {}, cards: new Set(), journal: [], prefs: {}, updatedAt: 0 };
+let storageOk = true;
+const defaultPrefs = () => ({ hunt: "", hide: true, cols: [...DEFAULT_COLS], filters: { sel: {}, modes: {} }, history: [] });
+
+function seedDB() {
+  db.shiny = {};
+  for (const [v, r] of Object.entries(SEED.shiny)) db.shiny[v] = parseRanges(r);
+  const missing = parseRanges(SEED.missing);
+  db.cards = new Set(Array.from({ length: NMAX }, (_, i) => i + 1).filter(i => !missing.has(i)));
+  db.journal = SEED.journal.map((e, i) => ({ uid: "seed" + i, label: e.label, date: e.date, counts: { ...e.counts } }));
+}
+function cleanEntry(e) {
+  const counts = {};
+  for (const [k, v] of Object.entries(e.counts || {})) if (CAT_IDS.has(k) && Number.isInteger(v) && v !== 0) counts[k] = v;
+  return { uid: typeof e.uid === "string" && e.uid ? e.uid : uid(), label: String(e.label).slice(0, 80), date: /^\d{4}-\d{2}-\d{2}$/.test(e.date || "") ? e.date : null, counts };
+}
+function normalizeData(d) {
+  if (!d || typeof d !== "object") throw new Error("format");
+  const out = { shiny: {}, cards: null, journal: null };
+  if (d.app === "roue-pokemon") {                   // ancienne roue : un jeu = première version
+    for (const [gid, arr] of Object.entries(d.shiny || {})) {
+      const v = VERSIONS.find(x => x.group === gid);
+      if (v && Array.isArray(arr)) out.shiny[v.id] = new Set(arr.filter(validId));
+    }
+    return out;
+  }
+  if (d.app !== "pokehub") throw new Error("format");
+  for (const [vid, arr] of Object.entries(d.shiny || {})) if (VBY[vid] && Array.isArray(arr)) out.shiny[vid] = new Set(arr.filter(validId));
+  if (Array.isArray(d.cards)) out.cards = new Set(d.cards.filter(validId));
+  if (Array.isArray(d.journal)) out.journal = d.journal.filter(e => e && typeof e.label === "string" && e.counts && typeof e.counts === "object").map(cleanEntry);
+  return out;
+}
+function applyData(n, mode) {
+  const added = { shiny: 0, cards: 0, journal: 0 };
+  if (mode === "replace") {
+    db.shiny = {};
+    for (const [v, s] of Object.entries(n.shiny)) { db.shiny[v] = new Set(s); added.shiny += s.size; }
+    if (n.cards) { db.cards = new Set(n.cards); added.cards = n.cards.size; }
+    if (n.journal) { db.journal = n.journal.map(e => ({ ...e })); added.journal = n.journal.length; }
+  } else {
+    for (const [v, s] of Object.entries(n.shiny)) { const cur = vSet(v); for (const id of s) if (!cur.has(id)) { cur.add(id); added.shiny++; } }
+    if (n.cards) for (const id of n.cards) if (!db.cards.has(id)) { db.cards.add(id); added.cards++; }
+    if (n.journal) { const have = new Set(db.journal.map(e => e.uid)); for (const e of n.journal) if (!have.has(e.uid)) { db.journal.push({ ...e }); added.journal++; } }
+  }
+  touch();
+  return added;
+}
+function exportData(withPrefs = false) {
+  const o = {
+    app: "pokehub", v: 1, exportedAt: new Date().toISOString(), updatedAt: db.updatedAt,
+    shiny: Object.fromEntries(Object.entries(db.shiny).filter(([, s]) => s.size).map(([v, s]) => [v, [...s].sort((a, b) => a - b)])),
+    cards: [...db.cards].sort((a, b) => a - b),
+    journal: db.journal,
+  };
+  if (withPrefs) o.prefs = db.prefs;
+  return o;
+}
+function loadDB() {
+  try { localStorage.setItem("pokehub:t", "1"); localStorage.removeItem("pokehub:t"); } catch (_) { storageOk = false; }
+  db.prefs = defaultPrefs();
+  try {
+    const raw = storageOk && localStorage.getItem(DB_KEY);
+    if (raw) {
+      const d = JSON.parse(raw);
+      const n = normalizeData(d);
+      db.shiny = n.shiny; db.cards = n.cards || new Set(); db.journal = n.journal || [];
+      db.prefs = Object.assign(defaultPrefs(), d.prefs || {});
+      if (!Array.isArray(db.prefs.cols) || !db.prefs.cols.every(c => VBY[c])) db.prefs.cols = [...DEFAULT_COLS];
+      db.updatedAt = d.updatedAt || 0;
+      return;
+    }
+  } catch (_) { /* données illisibles : on repart des tableurs */ }
+  seedDB();
+}
+let saveTimer = 0;
+function saveNow() { clearTimeout(saveTimer); try { if (storageOk) localStorage.setItem(DB_KEY, JSON.stringify(exportData(true))); } catch (_) { storageOk = false; } }
+function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 200); }
+addEventListener("pagehide", saveNow);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveNow(); });
+
+/* ---------- Accès à la collection ---------- */
+let unionCache = null;
+const vSet = v => (db.shiny[v] ??= new Set());
+const isShiny = (v, id) => !!db.shiny[v] && db.shiny[v].has(id);
+function shinyUnion() {
+  if (!unionCache) { unionCache = new Set(); for (const s of Object.values(db.shiny)) for (const id of s) unionCache.add(id); }
+  return unionCache;
+}
+const shinyAny = id => shinyUnion().has(id);
+const hasCard = id => db.cards.has(id);
+const shinyVersionsOf = id => VERSIONS.filter(v => isShiny(v.id, id));
+function setShiny(v, id, on, skip) { const s = vSet(v); on ? s.add(id) : s.delete(id); touch(skip); }
+function setCard(id, on, skip) { on ? db.cards.add(id) : db.cards.delete(id); touch(skip); }
+
+/* ---------- Vues, rendu différé, navigation ---------- */
+const views = {};
+let activeView = "wheel";
+let rafId = 0;
+function touch(skip) {
+  unionCache = null; db.updatedAt = Date.now(); saveSoon();
+  for (const k in views) if (k !== skip) views[k].dirty = true;
+  scheduleRender();
+}
+function scheduleRender() { if (rafId) return; rafId = requestAnimationFrame(() => { rafId = 0; renderActive(); renderHeader(); }); }
+function renderActive() { const v = views[activeView]; if (v && v.dirty) { v.dirty = false; v.render(); } }
+function renderHeader() {
+  $("#pillShiny").textContent = `✦ ${shinyUnion().size}`;
+  $("#pillCards").textContent = `${db.cards.size} / ${NMAX}`;
+}
+const TABS = ["wheel", "shiny", "cards", "data"];
+function show(name) {
+  if (!TABS.includes(name)) name = "wheel";
+  activeView = name;
+  $$(".view").forEach(el => { el.hidden = el.id !== "v-" + name; });
+  $$("#tabs [data-tab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+  try { history.replaceState(null, "", "#" + name); } catch (_) {}
+  renderActive();
+  if (views[name].onShow) views[name].onShow();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- Message temporaire avec annulation ---------- */
+let toastTimer = 0;
+function toast(msg, undo) {
+  const el = $("#toast");
+  el.replaceChildren();
+  const span = document.createElement("span"); span.textContent = msg; el.appendChild(span);
+  if (undo) {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = "Annuler";
+    b.addEventListener("click", () => { undo(); el.hidden = true; });
+    el.appendChild(b);
+  }
+  el.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.hidden = true; }, undo ? 6000 : 2800);
+}
+
+/* ---------- Petites aides communes ---------- */
+function downloadFile(name, text, type = "application/json") {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement("a"); a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+const fmtDate = iso => iso ? new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) : "";
+const sumCounts = c => Object.values(c).reduce((a, b) => a + b, 0);
+
+/* ============================================================
+   ROUE
+   ============================================================ */
+const TYPE_MODES = [
+  { id: "any", label: "Un des types", hint: "Garde les Pokémon ayant au moins un des types cochés." },
+  { id: "all", label: "Tous les types", hint: "Garde les Pokémon ayant tous les types cochés (ex. Feu + Vol)." },
+  { id: "primary", label: "Type principal", hint: "Seul le premier type du Pokémon compte (c’est la couleur de sa case)." },
+];
+const GAME_MODES = [
+  { id: "any", label: "Dans au moins un jeu", hint: "Garde les Pokémon présents dans au moins un des jeux cochés." },
+  { id: "all", label: "Dans tous les jeux", hint: "Garde seulement les Pokémon présents dans tous les jeux cochés." },
+];
+const COLL_MODES = [
+  { id: "all", label: "Tous les critères", hint: "Garde les Pokémon qui remplissent tous les critères cochés." },
+  { id: "any", label: "Un des critères", hint: "Garde les Pokémon qui remplissent au moins un des critères cochés." },
+];
+const COLL = {
+  nocard: p => !hasCard(p.id), card: p => hasCard(p.id),
+  noshiny: p => !shinyAny(p.id), shiny: p => shinyAny(p.id),
+};
+
+/* Chaque groupe de filtres : OU entre ses choix, ET entre les groupes. */
+const FILTER_GROUPS = [
+  {
+    id: "game", label: "Jeu", kind: "game", modes: GAME_MODES,
+    note: "D’après le Pokédex de chaque jeu (DLC à part). Les Pokémon obtenables seulement par échange ou transfert ne sont pas comptés.",
+    options: GAMES.map(g => ({ id: g.id, label: g.label, gen: g.gen, tag: g.noShiny ? "sans shiny" : "", title: `${GAME_SETS.get(g.id).size} Pokémon` })),
+    match: (p, ids, mode) => mode === "all" ? ids.every(i => GAME_SETS.get(i).has(p.id)) : ids.some(i => GAME_SETS.get(i).has(p.id)),
+  },
+  {
+    id: "coll", label: "Ma collection", modes: COLL_MODES,
+    options: [{ id: "nocard", label: "Sans carte" }, { id: "card", label: "Avec carte" }, { id: "noshiny", label: "Aucun shiny" }, { id: "shiny", label: "Déjà en shiny" }],
+    match: (p, ids, mode) => mode === "all" ? ids.every(i => COLL[i](p)) : ids.some(i => COLL[i](p)),
+  },
+  { id: "gen", label: "Génération", options: Object.entries(GEN_NAMES).map(([g, n]) => ({ id: "g" + g, label: `${g} · ${n}`, test: p => p.gen === Number(g) })) },
+  {
+    id: "cat", label: "Catégorie", options: [
+      { id: "starter", label: "Starters", test: p => isStarter(p.id) }, { id: "legendary", label: "Légendaires", test: p => p.legendary },
+      { id: "mythical", label: "Fabuleux", test: p => p.mythical }, { id: "baby", label: "Bébés", test: p => p.baby },
+    ],
+  },
+  { id: "slots", label: "Typage", options: [{ id: "mono", label: "Mono-type", test: p => p.types.length === 1 }, { id: "double", label: "Double type", test: p => p.types.length === 2 }] },
+  {
+    id: "type", label: "Type", kind: "type", modes: TYPE_MODES,
+    options: Object.entries(TYPES).map(([id, t]) => ({ id, label: t.fr, color: t.color })),
+    match: (p, ids, mode) => mode === "all" ? ids.every(t => p.types.includes(t)) : mode === "primary" ? ids.includes(p.types[0]) : ids.some(t => p.types.includes(t)),
+  },
+];
+const sel = Object.fromEntries(FILTER_GROUPS.map(g => [g.id, new Set()]));
+const modeOf = Object.fromEntries(FILTER_GROUPS.filter(g => g.modes).map(g => [g.id, g.modes[0].id]));
+
+function matches(p) {
+  for (const g of FILTER_GROUPS) {
+    const chosen = sel[g.id];
+    if (!chosen.size) continue;
+    const ok = g.match ? g.match(p, [...chosen], modeOf[g.id]) : g.options.some(o => chosen.has(o.id) && o.test(p));
+    if (!ok) return false;
+  }
+  return true;
+}
+const filtered = () => POKEMON.filter(matches);
+
+let excluded = new Set();       // retirés à la main pendant la session
+let pool = [];
+let theta = 0;
+let spinning = false;
+let lastRes = null;
+let artShiny = false;
+const huntV = () => VBY[db.prefs.hunt] || null;
+const isObtainedHunt = id => { const v = huntV(); return !!v && isShiny(v.id, id); };
+
+/* ---------- Dessin de la roue ---------- */
+let wheelCx = 0;
+const off = document.createElement("canvas");
+function layoutWheel() {
+  const wrap = $("#wheelWrap"), canvas = $("#wheel");
+  const css = Math.min(wrap.clientWidth, 620) || 360;
+  const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  canvas.width = canvas.height = Math.round(css * dpr);
+  off.width = off.height = canvas.width;
+  wheelCx = canvas.width / 2;
+  buildWheel(); drawWheel();
+}
+function buildWheel() {
+  if (!off.width) return;
+  const o = off.getContext("2d"), W = off.width, C = W / 2, R = C - W * 0.012, n = pool.length;
+  o.clearRect(0, 0, W, W);
+  const cs = getComputedStyle(document.documentElement);
+  if (!n) {
+    o.beginPath(); o.arc(C, C, R, 0, TAU); o.fillStyle = cs.getPropertyValue("--surface-2").trim() || "#ddd"; o.fill();
+    o.fillStyle = cs.getPropertyValue("--muted").trim() || "#666"; o.font = `700 ${W * 0.04}px system-ui, sans-serif`;
+    o.textAlign = "center"; o.textBaseline = "middle"; o.fillText("Aucun Pokémon sur la roue", C, C - W * 0.14);
+    return;
+  }
+  const s = TAU / n;
+  for (let i = 0; i < n; i++) {
+    const a0 = -Math.PI / 2 + i * s;
+    o.beginPath(); o.moveTo(C, C); o.arc(C, C, R, a0, a0 + s + (n > 1 ? 0.004 : 0)); o.closePath();
+    o.fillStyle = primaryColor(pool[i]); o.fill();
+  }
+  if (n > 1 && n <= 250) {
+    o.strokeStyle = "rgba(255,255,255,.55)"; o.lineWidth = Math.max(1, W * 0.0015);
+    for (let i = 0; i < n; i++) { const a = -Math.PI / 2 + i * s; o.beginPath(); o.moveTo(C, C); o.lineTo(C + Math.cos(a) * R, C + Math.sin(a) * R); o.stroke(); }
+  }
+  if (n <= 48) {
+    o.textBaseline = "middle"; o.textAlign = "right";
+    for (let i = 0; i < n; i++) {
+      const c = primaryColor(pool[i]);
+      let size = Math.min(W * 0.034, s * R * 0.55);
+      o.font = `700 ${size}px system-ui, "Segoe UI", sans-serif`;
+      const w = o.measureText(pool[i].name).width, maxW = R * 0.58;
+      if (w > maxW) { size *= maxW / w; o.font = `700 ${size}px system-ui, "Segoe UI", sans-serif`; }
+      o.save(); o.translate(C, C); o.rotate(-Math.PI / 2 + (i + 0.5) * s); o.fillStyle = textOn(c); o.fillText(pool[i].name, R - W * 0.03, 0); o.restore();
+    }
+  }
+  o.beginPath(); o.arc(C, C, R, 0, TAU); o.lineWidth = W * 0.008; o.strokeStyle = "rgba(255,255,255,.9)"; o.stroke();
+}
+function drawWheel() {
+  if (!wheelCx) return;
+  const canvas = $("#wheel"), ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.save(); ctx.translate(wheelCx, wheelCx); ctx.rotate(theta); ctx.drawImage(off, -wheelCx, -wheelCx); ctx.restore();
+}
+function indexUnderPointer() {
+  const n = pool.length; if (!n) return -1;
+  const a = ((-theta % TAU) + TAU) % TAU;
+  return Math.min(n - 1, Math.floor(a / (TAU / n)));
+}
+function updateLive() {
+  const p = pool[indexUnderPointer()];
+  $("#liveName").textContent = p ? p.name : "\u00a0";
+  $("#liveDot").style.background = p ? primaryColor(p) : "var(--border)";
+}
+
+/* ---------- Tirage ---------- */
+const ease = t => 1 - Math.pow(1 - t, 4);
+function spin() {
+  if (spinning || !pool.length) return;
+  spinning = true; $("#spin").disabled = true;
+  $("#filters").classList.add("locked"); $("#huntPanel").classList.add("locked");
+  const n = pool.length, s = TAU / n;
+  const winner = randInt(n), inside = 0.12 + 0.76 * randFloat();
+  let delta = ((((-(winner + inside) * s) - theta) % TAU) + TAU) % TAU;
+  delta += TAU * (reduceMotion ? 1 : 6 + randInt(3));
+  const from = theta, to = theta + delta, dur = reduceMotion ? 900 : 5200 + randFloat() * 1400, t0 = performance.now();
+  (function frame(now) {
+    const t = Math.min(1, (now - t0) / dur);
+    theta = from + (to - from) * ease(t); drawWheel(); updateLive();
+    if (t < 1) { requestAnimationFrame(frame); return; }
+    theta = ((to % TAU) + TAU) % TAU; drawWheel();
+    finish(pool[indexUnderPointer()]);
+  })(t0);
+}
+function finish(p) {
+  spinning = false; $("#spin").disabled = false;
+  $("#filters").classList.remove("locked"); $("#huntPanel").classList.remove("locked");
+  showResult(p);
+  db.prefs.history.unshift({ id: p.id, name: p.name, color: primaryColor(p) });
+  db.prefs.history = db.prefs.history.slice(0, 60); saveSoon(); renderHistory();
+  if ($("#removeWinner").checked) { excluded.add(p.id); setTimeout(() => { if (!spinning) refreshPool(); }, 900); }
+  renderPoolList(); updateExcludedUi();
+  if (views.wheel.dirty) scheduleRender();
+}
+
+/* ---------- Résultat ---------- */
+function artHTML(p) {
+  return `${sprEl(p.id, 150, artShiny)}<img src="${ART(p.id, artShiny)}" alt="Illustration de ${esc(p.name)}" loading="lazy" onerror="this.remove()">`;
+}
+function showResult(p) {
+  lastRes = p; artShiny = false;
+  const tags = [`Gen ${p.gen} · ${GEN_NAMES[p.gen]}`, p.legendary ? "Légendaire" : "", p.mythical ? "Fabuleux" : "", p.baby ? "Bébé" : "", isStarter(p.id) ? "Starter" : ""].filter(Boolean).join(" · ");
+  $("#result").innerHTML = `
+    <div class="result">
+      <div class="art" id="art">${artHTML(p)}<button type="button" class="art-toggle" id="btnArt" title="Voir la version shiny" aria-label="Voir la version shiny" aria-pressed="false">✦</button></div>
+      <div class="res-body">
+        <h3>${esc(p.name)}</h3>
+        <div class="num">N° ${String(p.id).padStart(4, "0")}</div>
+        <div class="badges">${typeBadges(p)}</div>
+        <div class="tags">${esc(tags)}</div>
+        <div class="res-status" id="resStatus"></div>
+        <div class="res-actions"><button type="button" class="btn-shiny" id="btnShiny"></button><button type="button" class="btn-card" id="btnCard"></button></div>
+      </div>
+    </div>`;
+  updateResultStatus();
+}
+function updateResultStatus() {
+  const p = lastRes; if (!p || !$("#resStatus")) return;
+  const vs = shinyVersionsOf(p.id).map(v => v.label);
+  $("#resStatus").innerHTML =
+    `<span class="chipst ${hasCard(p.id) ? "ok" : "miss"}">${hasCard(p.id) ? "Carte possédée" : "Pas de carte"}</span>` +
+    `<span class="chipst ${vs.length ? "gold" : ""}">${vs.length ? "Shiny : " + esc(vs.slice(0, 3).join(", ")) + (vs.length > 3 ? ` +${vs.length - 3}` : "") : "Aucun shiny"}</span>`;
+  const g = huntV(), b = $("#btnShiny"), c = $("#btnCard");
+  b.disabled = false; b.classList.remove("done");
+  if (!g) b.textContent = "Choisir un jeu de chasse";
+  else if (g.noShiny) { b.textContent = "Pas de shiny dans ce jeu"; b.disabled = true; }
+  else if (isShiny(g.id, p.id)) { b.textContent = "✦ Shiny obtenu · annuler"; b.classList.add("done"); }
+  else b.textContent = "✦ Shiny obtenu !";
+  c.classList.toggle("done", hasCard(p.id));
+  c.textContent = hasCard(p.id) ? "Carte obtenue · annuler" : "Carte obtenue !";
+}
+
+/* ---------- Filtres (interface) ---------- */
+const filterUi = { chips: new Map(), clears: new Map(), modes: new Map(), hints: new Map() };
+function makeChip(g, o) {
+  const b = document.createElement("button");
+  b.type = "button"; b.className = "fchip" + (g.kind === "type" ? " type" : "");
+  if (g.kind === "type") { b.style.setProperty("--c", o.color); b.style.setProperty("--ct", textOn(o.color)); }
+  b.append(o.label);
+  if (o.tag) { const t = document.createElement("span"); t.className = "chip-tag"; t.textContent = o.tag; b.appendChild(t); }
+  if (o.title) b.title = o.title;
+  b.setAttribute("aria-pressed", "false");
+  b.addEventListener("click", () => { if (spinning) return; const set = sel[g.id]; set.has(o.id) ? set.delete(o.id) : set.add(o.id); onFiltersChanged(); });
+  filterUi.chips.set(g.id + ":" + o.id, b);
+  return b;
+}
+function sectionsOf(g) {
+  if (g.kind !== "game") return [[null, g.options]];
+  const m = new Map();
+  for (const o of g.options) { if (!m.has(o.gen)) m.set(o.gen, []); m.get(o.gen).push(o); }
+  return [...m];
+}
+function buildFilters() {
+  const body = $("#filterBody"); body.replaceChildren();
+  for (const k of Object.keys(filterUi)) filterUi[k].clear();
+  for (const g of FILTER_GROUPS) {
+    const row = document.createElement("div"); row.className = "frow";
+    const head = document.createElement("div"); head.className = "fhead";
+    const label = document.createElement("span"); label.textContent = g.label;
+    const clear = document.createElement("button");
+    clear.type = "button"; clear.className = "link-btn fclear"; clear.textContent = "Effacer"; clear.hidden = true;
+    clear.setAttribute("aria-label", `Effacer le filtre ${g.label}`);
+    clear.addEventListener("click", () => { if (spinning) return; sel[g.id].clear(); onFiltersChanged(); });
+    head.append(label, clear); filterUi.clears.set(g.id, clear);
+    const main = document.createElement("div");
+    for (const [key, opts] of sectionsOf(g)) {
+      const chips = document.createElement("div"); chips.className = "fchips";
+      chips.setAttribute("role", "group"); chips.setAttribute("aria-label", key === null ? g.label : `${g.label}, génération ${key}`);
+      for (const o of opts) chips.appendChild(makeChip(g, o));
+      if (key === null) { main.appendChild(chips); continue; }
+      const sub = document.createElement("div"); sub.className = "fsub";
+      const lb = document.createElement("button"); lb.type = "button"; lb.className = "fsub-l"; lb.textContent = `Gen ${key}`;
+      lb.title = "Tout cocher / tout décocher pour cette génération";
+      lb.addEventListener("click", () => {
+        if (spinning) return;
+        const set = sel[g.id], ids = opts.map(o => o.id), all = ids.every(i => set.has(i));
+        ids.forEach(i => (all ? set.delete(i) : set.add(i))); onFiltersChanged();
+      });
+      sub.append(lb, chips); main.appendChild(sub);
+    }
+    if (g.modes) {
+      const seg = document.createElement("div"); seg.className = "seg"; seg.setAttribute("role", "group"); seg.setAttribute("aria-label", `Combinaison : ${g.label}`);
+      for (const m of g.modes) {
+        const b = document.createElement("button"); b.type = "button"; b.textContent = m.label; b.setAttribute("aria-pressed", "false");
+        b.addEventListener("click", () => { if (spinning) return; modeOf[g.id] = m.id; onFiltersChanged(); });
+        seg.appendChild(b); filterUi.modes.set(g.id + ":" + m.id, b);
+      }
+      const hint = document.createElement("p"); hint.className = "hint"; main.append(seg, hint); filterUi.hints.set(g.id, hint);
+    }
+    if (g.note) { const note = document.createElement("p"); note.className = "hint"; note.textContent = g.note; main.appendChild(note); }
+    row.append(head, main); body.appendChild(row);
+  }
+}
+function syncFilterUi() {
+  let active = 0;
+  for (const g of FILTER_GROUPS) {
+    const set = sel[g.id]; if (set.size) active++;
+    for (const o of g.options) filterUi.chips.get(g.id + ":" + o.id)?.setAttribute("aria-pressed", String(set.has(o.id)));
+    filterUi.clears.get(g.id).hidden = set.size === 0;
+    if (g.modes) {
+      for (const m of g.modes) filterUi.modes.get(g.id + ":" + m.id)?.setAttribute("aria-pressed", String(m.id === modeOf[g.id]));
+      filterUi.hints.get(g.id).textContent = g.modes.find(m => m.id === modeOf[g.id]).hint;
+    }
+  }
+  const modesDefault = FILTER_GROUPS.every(g => !g.modes || modeOf[g.id] === g.modes[0].id);
+  $("#filterBadge").hidden = active === 0; $("#filterBadge").textContent = active;
+  $("#resetFilters").disabled = active === 0 && modesDefault;
+}
+function filterMessage(list) {
+  if (!list.length) return "Aucun Pokémon ne correspond à cette combinaison : assouplissez un filtre.";
+  const games = [...sel.game];
+  if (games.length && games.every(id => GAMES.find(g => g.id === id)?.noShiny)) return "Les shiny n’existent pas dans les jeux de 1re génération.";
+  return "";
+}
+function onFiltersChanged() { saveFilters(); refreshPool(); }
+function resetFilters() { for (const g of FILTER_GROUPS) { sel[g.id].clear(); if (g.modes) modeOf[g.id] = g.modes[0].id; } onFiltersChanged(); }
+function saveFilters() {
+  db.prefs.filters = { sel: Object.fromEntries(FILTER_GROUPS.map(g => [g.id, [...sel[g.id]]])), modes: { ...modeOf } };
+  saveSoon();
+}
+function loadFilters() {
+  const f = db.prefs.filters || {};
+  for (const g of FILTER_GROUPS) {
+    const valid = new Set(g.options.map(o => o.id));
+    for (const id of f.sel?.[g.id] ?? []) if (valid.has(id)) sel[g.id].add(id);
+    if (g.modes && g.modes.some(m => m.id === f.modes?.[g.id])) modeOf[g.id] = f.modes[g.id];
+  }
+}
+
+/* ---------- Chasse au shiny (panneau) ---------- */
+function buildHunt() {
+  const el = $("#huntGame");
+  el.replaceChildren(new Option("Aucun (pas de suivi)", ""));
+  for (const [title, list] of versionGroups()) {
+    const og = document.createElement("optgroup"); og.label = title;
+    for (const v of list) og.appendChild(new Option(v.label + (v.noShiny ? " (sans shiny)" : ""), v.id));
+    el.appendChild(og);
+  }
+}
+function syncHunt() {
+  const v = huntV(), set = v ? (db.shiny[v.id] || new Set()) : new Set();
+  $("#huntGame").value = v ? v.id : ""; $("#hideObtained").checked = db.prefs.hide;
+  $("#huntFilter").hidden = !v || v.noDex; $("#huntStats").hidden = !v;
+  if (v) {
+    const dex = dexOf(v.id), done = v.noDex ? set.size : [...set].filter(id => dex.has(id)).length;
+    $("#huntBar").parentElement.hidden = v.noDex;
+    $("#huntBar").style.width = (dex.size ? Math.round(done / dex.size * 100) : 0) + "%";
+    $("#huntStat").textContent = v.noShiny ? "Les shiny n’existent pas dans ce jeu."
+      : v.noDex ? plural(done, "shiny obtenu", "shiny obtenus")
+        : `${done} / ${dex.size} shiny obtenus, ${plural(dex.size - done, "restant", "restants")}`;
+  }
+  $("#gotSummary").textContent = v ? `Mes shiny obtenus (${set.size})` : "Mes shiny obtenus";
+  const box = $("#got"); box.replaceChildren();
+  if (!v || !set.size) { const p = document.createElement("p"); p.textContent = v ? "Aucun shiny pour l’instant dans ce jeu." : "Choisissez un jeu de chasse pour suivre vos shiny."; box.appendChild(p); }
+  else for (const id of [...set].sort((a, b) => a - b)) {
+    const mon = P(id), c = primaryColor(mon), b = document.createElement("button");
+    b.type = "button"; b.textContent = "✦ " + mon.name; b.style.background = c; b.style.color = textOn(c);
+    b.title = "Retirer ce shiny de la liste"; b.addEventListener("click", () => { if (!spinning) setShiny(v.id, id, false); });
+    box.appendChild(b);
+  }
+}
+
+/* ---------- Liste, historique, roue ---------- */
+function renderHistory() {
+  const ul = $("#history"); ul.replaceChildren();
+  for (const h of db.prefs.history) {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="sw" style="background:${esc(h.color)}"></span><span class="hn"></span><span class="hid">N° ${h.id}</span>`;
+    li.querySelector(".hn").textContent = h.name; ul.appendChild(li);
+  }
+  $("#historyEmpty").hidden = db.prefs.history.length > 0; $("#clearHistory").disabled = !db.prefs.history.length;
+}
+function renderPoolList() {
+  const q = norm($("#search").value.trim()), frag = document.createDocumentFragment();
+  for (const p of filtered()) {
+    if (q && !norm(p.name).includes(q)) continue;
+    const c = primaryColor(p), b = document.createElement("button"), got = isObtainedHunt(p.id);
+    b.type = "button"; b.textContent = (got ? "✦ " : "") + p.name; b.style.background = c; b.style.color = textOn(c);
+    if (got) b.className = db.prefs.hide ? "off" : "got-it"; else if (excluded.has(p.id)) b.className = "off";
+    b.title = got ? `N° ${p.id}, shiny obtenu (cliquer pour l’annuler)` : `N° ${p.id}`;
+    b.addEventListener("click", () => {
+      if (spinning) return;
+      if (isObtainedHunt(p.id)) { setShiny(huntV().id, p.id, false); return; }
+      excluded.has(p.id) ? excluded.delete(p.id) : excluded.add(p.id);
+      b.classList.toggle("off", excluded.has(p.id)); refreshPool(false);
+    });
+    frag.appendChild(b);
+  }
+  $("#pool").replaceChildren(frag);
+}
+function updateExcludedUi() { $("#resetExcluded").disabled = excluded.size === 0; }
+function refreshPool(rebuildList = true) {
+  const list = filtered();
+  pool = list.filter(p => !excluded.has(p.id) && !(db.prefs.hide && isObtainedHunt(p.id)));
+  const removed = list.length - pool.length;
+  $("#count").textContent = removed === 0 ? plural(pool.length, "Pokémon sur la roue", "Pokémon sur la roue") : `${pool.length} Pokémon sur la roue (${plural(removed, "retiré", "retirés")})`;
+  $("#filterCount").textContent = `${list.length} correspondent`;
+  $("#filterMsg").textContent = filterMessage(list);
+  $("#spin").disabled = pool.length === 0 || spinning;
+  if (!pool.length) $("#liveName").textContent = "\u00a0";
+  syncFilterUi(); syncHunt(); updateExcludedUi();
+  if (rebuildList) renderPoolList();
+  buildWheel(); drawWheel(); updateLive();
+  if (lastRes) updateResultStatus();
+}
+
+function initWheel() {
+  loadFilters(); buildFilters(); buildHunt(); renderHistory();
+  if (window.innerWidth < 800) $("#filters").open = false;
+  views.wheel = { dirty: true, onShow: () => { layoutWheel(); }, render: () => { if (spinning) { views.wheel.dirty = true; return; } refreshPool(); } };
+
+  $("#spin").addEventListener("click", spin);
+  $("#resetFilters").addEventListener("click", () => { if (!spinning) resetFilters(); });
+  $("#search").addEventListener("input", renderPoolList);
+  $("#resetExcluded").addEventListener("click", () => { if (!spinning) { excluded.clear(); refreshPool(); } });
+  $("#clearHistory").addEventListener("click", () => { db.prefs.history = []; saveSoon(); renderHistory(); });
+  $("#huntGame").addEventListener("change", e => { if (spinning) return; db.prefs.hunt = e.target.value; saveSoon(); refreshPool(); });
+  $("#hideObtained").addEventListener("change", e => { if (spinning) return; db.prefs.hide = e.target.checked; saveSoon(); refreshPool(); });
+  $("#huntFilter").addEventListener("click", () => {
+    const v = huntV(); if (spinning || !v) return;
+    sel.game.clear(); sel.game.add(v.group); modeOf.game = "any"; onFiltersChanged();
+  });
+  $("#result").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b || spinning || !lastRes) return;
+    const p = lastRes;
+    if (b.id === "btnArt") {
+      artShiny = !artShiny;
+      $("#art").innerHTML = artHTML(p) + `<button type="button" class="art-toggle" id="btnArt" title="Voir la version shiny" aria-label="Voir la version shiny" aria-pressed="${artShiny}">✦</button>`;
+      return;
+    }
+    if (false) { }
+    else if (b.id === "btnShiny") {
+      const v = huntV();
+      if (!v) { $("#huntPanel").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" }); $("#huntGame").focus(); return; }
+      if (b.disabled) return;
+      const on = !isShiny(v.id, p.id); setShiny(v.id, p.id, on);
+      toast(on ? `✦ ${p.name} ajouté dans ${v.label}` : `Shiny retiré de ${v.label}`, () => setShiny(v.id, p.id, !on));
+    } else if (b.id === "btnCard") {
+      const on = !hasCard(p.id); setCard(p.id, on);
+      toast(on ? `Carte de ${p.name} ajoutée` : `Carte de ${p.name} retirée`, () => setCard(p.id, !on));
+    }
+    updateResultStatus();
+  });
+  document.addEventListener("keydown", e => {
+    if (e.code !== "Space" || e.repeat || activeView !== "wheel") return;
+    const tag = (document.activeElement?.tagName || "").toLowerCase();
+    if (["input", "button", "select", "summary", "textarea"].includes(tag)) return;
+    e.preventDefault(); spin();
+  });
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (activeView === "wheel") layoutWheel(); }, 120); });
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", () => { if (activeView === "wheel") { buildWheel(); drawWheel(); } });
+}
+
+/* ============================================================
+   SHINY
+   ============================================================ */
+const SH = { q: "", gen: "all", status: "all", game: "all" };
+const shCols = () => db.prefs.cols.map(v => VBY[v]).filter(Boolean);
+
+function shPass(p) {
+  if (SH.gen !== "all" && p.gen !== +SH.gen) return false;
+  if (SH.q) {
+    const q = SH.q.trim(), nq = norm(q);
+    if (!(norm(p.name).includes(nq) || String(p.id) === q.replace("#", ""))) return false;
+  }
+  if (SH.status === "all") return true;
+  let got, relevant = true;
+  if (SH.game === "all") got = shinyAny(p.id);
+  else { got = isShiny(SH.game, p.id); relevant = inDex(SH.game, p.id); }
+  return SH.status === "got" ? got : (!got && relevant);
+}
+function shRow(p, cols) {
+  const any = shinyAny(p.id);
+  const cells = cols.map(v => {
+    const on = isShiny(v.id, p.id), dim = !inDex(v.id, p.id) && !v.noDex;
+    return `<button type="button" class="scell${on ? " on" : ""}${dim ? " dim" : ""}" data-v="${v.id}" data-label="${esc(v.label)}" aria-pressed="${on}" aria-label="${esc(p.name)} shiny ${esc(v.label)}">✦</button>`;
+  }).join("");
+  return `<div class="srow" data-id="${p.id}"><span class="sn">${p.id}</span>${sprEl(p.id, 48, any)}<span class="sname">${esc(p.name)}<small>${p.types.map(t => TYPES[t].fr).join(" / ")}</small></span><span class="sgames">${cells}</span></div>`;
+}
+function renderShinyStats() {
+  const cols = shCols();
+  $("#shTotal").textContent = shinyUnion().size;
+  $("#shStats").innerHTML = cols.map(v => {
+    const n = (db.shiny[v.id] || new Set()).size, dex = dexOf(v.id).size, pct = v.noDex ? 0 : Math.round(n / dex * 100);
+    return `<button type="button" class="stat${SH.game === v.id ? " on" : ""}" data-v="${v.id}" title="Filtrer sur ${esc(v.label)}"><b>${n}</b><span>${esc(v.label)}</span><small>${v.noDex ? "hors Pokédex" : `sur ${dex}`}</small>${v.noDex ? "" : `<i style="width:${pct}%"></i>`}</button>`;
+  }).join("");
+}
+function renderShiny() {
+  const cols = shCols();
+  const g = $("#shGame"), cur = SH.game;
+  g.innerHTML = `<option value="all">Tous les jeux suivis</option>` + cols.map(v => `<option value="${v.id}">${esc(v.label)}</option>`).join("");
+  if (cur !== "all" && !cols.some(v => v.id === cur)) SH.game = "all";
+  g.value = SH.game;
+  $("#shGen").value = SH.gen; $("#shQ").value = SH.q;
+  $$("#shStatus button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === SH.status)));
+  renderShinyStats();
+  const list = POKEMON.filter(shPass);
+  $("#shCount").textContent = plural(list.length, "Pokémon affiché", "Pokémon affichés");
+  const style = `--n:${cols.length}`;
+  $("#shHead").style.cssText = style; $("#shList").style.cssText = style;
+  $("#shHead").innerHTML = `<span>N°</span><span></span><span>Pokémon</span>${cols.map(v => `<span class="hc" title="${esc(v.label)}">${esc(v.label)}</span>`).join("")}`;
+  $("#shList").innerHTML = list.length ? list.map(p => shRow(p, cols)).join("") : `<p class="empty">Aucun Pokémon ne correspond. Essayez d’élargir la recherche.</p>`;
+}
+
+function openColsDialog() {
+  const chosen = new Set(db.prefs.cols), body = $("#colsBody");
+  body.innerHTML = versionGroups().map(([title, list]) => `<fieldset><legend>${esc(title)}</legend>${list.map(v => `<label class="check"><input type="checkbox" value="${v.id}"${chosen.has(v.id) ? " checked" : ""}> ${esc(v.label)}</label>`).join("")}</fieldset>`).join("");
+  const dlg = $("#colsDlg");
+  dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
+}
+function applyCols() {
+  const picked = new Set($$("#colsBody input:checked").map(i => i.value));
+  if (!picked.size) { toast("Choisissez au moins un jeu."); return; }
+  const kept = db.prefs.cols.filter(v => picked.has(v)), added = VERSIONS.map(v => v.id).filter(v => picked.has(v) && !kept.includes(v));
+  db.prefs.cols = [...kept, ...added]; saveSoon();
+  const dlg = $("#colsDlg"); dlg.close ? dlg.close() : dlg.removeAttribute("open");
+  renderShiny();
+}
+
+function initShiny() {
+  views.shiny = { dirty: true, render: renderShiny };
+  $("#shGen").innerHTML = `<option value="all">Toutes les générations</option>` + Object.entries(GEN_NAMES).map(([g, n]) => `<option value="${g}">Gen ${g} · ${n}</option>`).join("");
+  let t; $("#shQ").addEventListener("input", e => { SH.q = e.target.value; clearTimeout(t); t = setTimeout(renderShiny, 140); });
+  $("#shGen").addEventListener("change", e => { SH.gen = e.target.value; renderShiny(); });
+  $("#shGame").addEventListener("change", e => { SH.game = e.target.value; renderShiny(); });
+  $("#shStatus").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { SH.status = b.dataset.s; renderShiny(); } });
+  $("#shStats").addEventListener("click", e => {
+    const b = e.target.closest(".stat"); if (!b) return;
+    SH.game = SH.game === b.dataset.v ? "all" : b.dataset.v;
+    if (SH.game !== "all" && SH.status === "all") SH.status = "missing";
+    renderShiny();
+  });
+  $("#shCols").addEventListener("click", openColsDialog);
+  $("#colsApply").addEventListener("click", applyCols);
+  $("#colsCancel").addEventListener("click", () => { const d = $("#colsDlg"); d.close ? d.close() : d.removeAttribute("open"); });
+  $("#shList").addEventListener("click", e => {
+    const cell = e.target.closest(".scell"); if (!cell) return;
+    const row = cell.closest(".srow"), id = +row.dataset.id, vid = cell.dataset.v, on = !isShiny(vid, id), p = P(id), v = VBY[vid];
+    setShiny(vid, id, on, "shiny");
+    cell.classList.toggle("on", on); cell.setAttribute("aria-pressed", String(on));
+    row.querySelector(".spr").setAttribute("style", spr(id, 48, shinyAny(id)));
+    renderShinyStats(); renderHeader();
+    if (!on) toast(`Shiny retiré : ${p.name} (${v.label})`, () => { setShiny(vid, id, true, "shiny"); cell.classList.add("on"); cell.setAttribute("aria-pressed", "true"); row.querySelector(".spr").setAttribute("style", spr(id, 48, true)); renderShinyStats(); renderHeader(); });
+  });
+}
+
+/* ============================================================
+   CARTES
+   ============================================================ */
+const CD = { status: "missing", gen: "all", q: "", tab: "list" };
+let jEdit = null;
+
+function genTotals() {
+  const tot = {}, own = {};
+  for (const p of POKEMON) { tot[p.gen] = (tot[p.gen] || 0) + 1; if (hasCard(p.id)) own[p.gen] = (own[p.gen] || 0) + 1; }
+  return { tot, own };
+}
+function renderCardsHead() {
+  const owned = db.cards.size, { tot, own } = genTotals();
+  $("#cdOwned").textContent = `${owned} / ${NMAX}`;
+  $("#cdSubtitle").textContent = owned === NMAX ? "Collection complète, bravo !" : `${plural(NMAX - owned, "Pokémon sans carte", "Pokémon sans carte")}`;
+  $("#cdBar").style.width = (owned / NMAX * 100) + "%";
+  $("#cdGens").innerHTML = Object.keys(GEN_NAMES).map(g => {
+    const o = own[g] || 0, t = tot[g], done = o === t;
+    return `<button type="button" class="gstrip${CD.gen === g ? " on" : ""}${done ? " done" : ""}" data-g="${g}" title="${t - o} manquants en Gen ${g}"><span>Gen ${g}</span><b>${o}/${t}</b><i style="width:${o / t * 100}%"></i></button>`;
+  }).join("");
+}
+function cdPass(p) {
+  if (CD.gen !== "all" && p.gen !== +CD.gen) return false;
+  if (CD.q) { const q = CD.q.trim(); if (!(norm(p.name).includes(norm(q)) || String(p.id) === q.replace("#", ""))) return false; }
+  const own = hasCard(p.id);
+  return CD.status === "all" || (CD.status === "own" ? own : !own);
+}
+const tileHTML = p => { const own = hasCard(p.id); return `<button type="button" class="tile ${own ? "own" : "miss"}" data-id="${p.id}" aria-pressed="${own}" aria-label="${esc(p.name)}, ${own ? "carte possédée" : "carte manquante"}"><span class="tn">${p.id}</span>${sprEl(p.id, 60)}<span class="tname">${esc(p.name)}</span></button>`; };
+function sectionHead(g) {
+  const { tot, own } = genTotals(), o = own[g] || 0;
+  return `Gen ${g} · ${GEN_NAMES[g]} <small>${o} / ${tot[g]}${o === tot[g] ? "" : `, ${plural(tot[g] - o, "manquante", "manquantes")}`}</small>`;
+}
+function renderCardList() {
+  const list = POKEMON.filter(cdPass);
+  $("#cdCount").textContent = plural(list.length, "Pokémon affiché", "Pokémon affichés");
+  $$("#cdStatus button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === CD.status)));
+  $("#cdGen").value = CD.gen; $("#cdQ").value = CD.q;
+  if (!list.length) { $("#cdList").innerHTML = `<p class="empty">${CD.status === "missing" && !CD.q && CD.gen === "all" ? "Plus aucune carte manquante : la collection est complète !" : "Aucun Pokémon ne correspond."}</p>`; return; }
+  const by = {};
+  for (const p of list) (by[p.gen] ||= []).push(p);
+  $("#cdList").innerHTML = Object.entries(by).map(([g, l]) => `<section class="gsec" data-g="${g}"><h3>${sectionHead(g)}</h3><div class="tiles">${l.map(tileHTML).join("")}</div></section>`).join("");
+}
+
+/* ---------- Statistiques et journal ---------- */
+function catTotals() { const t = {}; for (const e of db.journal) for (const [c, n] of Object.entries(e.counts)) t[c] = (t[c] || 0) + n; return t; }
+function renderCardStats() {
+  const t = catTotals(), { tot, own } = genTotals();
+  const sans = CATS.filter(c => !c.jcc).reduce((a, c) => a + (t[c.id] || 0), 0), jcc = t.jcc || 0;
+  const max = Math.max(1, ...CATS.map(c => Math.abs(t[c.id] || 0)));
+  const sums = `<div class="sumrow">
+    <div class="sum"><b>${sans + jcc}</b><span>cartes au total, JCC compris</span></div>
+    <div class="sum"><b>${sans}</b><span>cartes sans les cartes JCC</span></div>
+    <div class="sum"><b>${jcc}</b><span>cartes JCC</span></div>
+    <div class="sum"><b>${db.cards.size}</b><span>Pokémon différents</span></div></div>`;
+  const groups = CAT_GROUPS.map(g => `<div class="catgroup"><h4>${g.title}</h4>${g.cats.map(c => {
+    const n = t[c.id] || 0, gn = c.id.match(/^g(\d)$/), extra = gn ? `<em>${own[gn[1]] || 0} / ${tot[gn[1]]} différents</em>` : "";
+    return `<div class="catrow"><span class="cl">${esc(c.label)}</span>${extra}<span class="cbar"><i style="width:${Math.max(0, n) / max * 100}%"></i></span><b>${n}</b></div>`;
+  }).join("")}</div>`).join("");
+  const entries = db.journal.map(e => {
+    const parts = Object.entries(e.counts).map(([c, n]) => `<span class="chipst ${n < 0 ? "miss" : ""}">${esc(CATS.find(x => x.id === c)?.label || c)} ${n > 0 ? "+" : ""}${n}</span>`).join("");
+    const total = sumCounts(e.counts);
+    return `<details class="entry"><summary><span class="el">${esc(e.label)}</span><span class="ed">${fmtDate(e.date)}</span><b class="${total < 0 ? "neg" : ""}">${total > 0 ? "+" : ""}${total}</b></summary>
+      <div class="ebody">${parts || "<em>Aucune carte</em>"}<div class="eact"><button type="button" class="btn-ghost" data-edit="${e.uid}">Modifier</button><button type="button" class="btn-ghost danger" data-del="${e.uid}">Supprimer</button></div></div></details>`;
+  }).join("");
+  const form = `<div class="jform" id="jForm"><h4 id="jTitle">${jEdit ? "Modifier l’entrée" : "Ajouter des cartes"}</h4>
+    <div class="jtop"><label>Nom<input type="text" id="jLabel" maxlength="80" placeholder="Ex. 3 boosters, échange avec Léo"></label><label>Date<input type="date" id="jDate"></label></div>
+    ${CAT_GROUPS.map(g => `<fieldset><legend>${g.title}</legend><div class="jgrid">${g.cats.map(c => `<label>${esc(c.label)}<input type="number" step="1" inputmode="numeric" data-cat="${c.id}" placeholder="0"></label>`).join("")}</div></fieldset>`).join("")}
+    <p class="hint">Un nombre négatif retire des cartes (don, échange).</p>
+    <div class="jact"><button type="button" class="btn-primary" id="jSave">${jEdit ? "Enregistrer les changements" : "Ajouter au journal"}</button><button type="button" class="btn-ghost" id="jCancel"${jEdit ? "" : " hidden"}>Annuler</button></div></div>`;
+  $("#cdStats").innerHTML = `${sums}<div class="catgrid">${groups}</div><h3 class="sec">Journal des ajouts</h3><div class="entries">${entries || "<p class='empty'>Aucune entrée pour l’instant.</p>"}</div>${form}`;
+  $("#jDate").value = new Date().toISOString().slice(0, 10);
+  if (jEdit) fillForm(jEdit);
+}
+function fillForm(uidv) {
+  const e = db.journal.find(x => x.uid === uidv); if (!e) { jEdit = null; return; }
+  $("#jLabel").value = e.label; $("#jDate").value = e.date || "";
+  $$("#jForm [data-cat]").forEach(i => { i.value = e.counts[i.dataset.cat] ?? ""; });
+}
+function saveEntry() {
+  const label = $("#jLabel").value.trim();
+  if (!label) { toast("Donnez un nom à cette entrée."); $("#jLabel").focus(); return; }
+  const counts = {};
+  $$("#jForm [data-cat]").forEach(i => { const n = parseInt(i.value, 10); if (Number.isInteger(n) && n !== 0) counts[i.dataset.cat] = n; });
+  if (!Object.keys(counts).length) { toast("Saisissez au moins un nombre de cartes."); return; }
+  const date = $("#jDate").value || null;
+  if (jEdit) { const e = db.journal.find(x => x.uid === jEdit); if (e) Object.assign(e, { label, date, counts }); jEdit = null; toast("Entrée modifiée"); }
+  else { db.journal.push({ uid: uid(), label, date, counts }); toast("Ajouté au journal"); }
+  touch("cards"); renderCardStats();
+}
+
+function initCards() {
+  views.cards = { dirty: true, render: () => { renderCardsHead(); CD.tab === "list" ? renderCardList() : renderCardStats(); } };
+  $("#cdGen").innerHTML = `<option value="all">Toutes les générations</option>` + Object.entries(GEN_NAMES).map(([g, n]) => `<option value="${g}">Gen ${g} · ${n}</option>`).join("");
+  const setTab = t => {
+    CD.tab = t;
+    $$("#cdTabs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.t === t)));
+    $("#cdPokemon").hidden = t !== "list"; $("#cdStats").hidden = t !== "stats";
+    t === "list" ? renderCardList() : renderCardStats();
+  };
+  $("#cdTabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) setTab(b.dataset.t); });
+  $("#cdStatus").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { CD.status = b.dataset.s; renderCardList(); } });
+  $("#cdGen").addEventListener("change", e => { CD.gen = e.target.value; renderCardsHead(); renderCardList(); });
+  let t; $("#cdQ").addEventListener("input", e => { CD.q = e.target.value; clearTimeout(t); t = setTimeout(renderCardList, 140); });
+  $("#cdGens").addEventListener("click", e => { const b = e.target.closest(".gstrip"); if (!b) return; CD.gen = CD.gen === b.dataset.g ? "all" : b.dataset.g; renderCardsHead(); renderCardList(); });
+  $("#cdSpin").addEventListener("click", () => {
+    for (const g of FILTER_GROUPS) { sel[g.id].clear(); if (g.modes) modeOf[g.id] = g.modes[0].id; }
+    sel.coll.add("nocard"); saveFilters(); show("wheel"); refreshPool();
+  });
+  $("#cdList").addEventListener("click", e => {
+    const tile = e.target.closest(".tile"); if (!tile) return;
+    const id = +tile.dataset.id, p = P(id), on = !hasCard(id);
+    setCard(id, on, "cards");
+    tile.classList.toggle("own", on); tile.classList.toggle("miss", !on); tile.setAttribute("aria-pressed", String(on));
+    renderCardsHead();
+    const sec = tile.closest(".gsec");
+    if (!cdPass(p)) { tile.classList.add("gone"); setTimeout(() => { tile.remove(); if (sec && !sec.querySelector(".tile")) sec.remove(); else if (sec) sec.querySelector("h3").innerHTML = sectionHead(sec.dataset.g); }, 220); }
+    else if (sec) sec.querySelector("h3").innerHTML = sectionHead(sec.dataset.g);
+    toast(on ? `Carte de ${p.name} ajoutée` : `Carte de ${p.name} retirée`, () => { setCard(id, !on, "cards"); renderCardsHead(); renderCardList(); });
+  });
+  $("#cdStats").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.id === "jSave") saveEntry();
+    else if (b.id === "jCancel") { jEdit = null; renderCardStats(); }
+    else if (b.dataset.edit) { jEdit = b.dataset.edit; renderCardStats(); $("#jForm").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" }); }
+    else if (b.dataset.del) {
+      const i = db.journal.findIndex(x => x.uid === b.dataset.del), removed = db.journal[i];
+      if (i >= 0 && confirm(`Supprimer « ${removed.label} » du journal ?`)) { db.journal.splice(i, 1); touch("cards"); renderCardStats(); toast("Entrée supprimée", () => { db.journal.splice(i, 0, removed); touch("cards"); renderCardStats(); }); }
+    }
+  });
+}
+
+/* ============================================================
+   DONNÉES : sauvegarde, synchronisation, installation
+   ============================================================ */
+const b64u = u8 => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
+const unb64u = s => { s = s.replace(/-/g, "+").replace(/_/g, "/"); while (s.length % 4) s += "="; const b = atob(s), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; };
+async function makeCode() {
+  const raw = new TextEncoder().encode(JSON.stringify(exportData()));
+  if (typeof CompressionStream !== "undefined") {
+    const buf = await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
+    return "PH1G." + b64u(new Uint8Array(buf));
+  }
+  return "PH1R." + b64u(raw);
+}
+async function readCode(code) {
+  code = code.trim().replace(/\s+/g, "");
+  const tag = code.slice(0, 5); let u = unb64u(code.slice(5));
+  if (tag === "PH1G.") {
+    if (typeof DecompressionStream === "undefined") throw new Error("gz");
+    u = new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer());
+  } else if (tag !== "PH1R.") throw new Error("format");
+  return JSON.parse(new TextDecoder().decode(u));
+}
+const importMode = () => ($("input[name=dtmode]:checked") || {}).value || "merge";
+function report(added, mode) {
+  const parts = [];
+  if (added.shiny) parts.push(plural(added.shiny, "shiny", "shiny"));
+  if (added.cards) parts.push(plural(added.cards, "carte", "cartes"));
+  if (added.journal) parts.push(plural(added.journal, "entrée de journal", "entrées de journal"));
+  return `${mode === "replace" ? "Données remplacées" : "Fusion terminée"} : ${parts.length ? parts.join(", ") : "rien de nouveau"}.`;
+}
+function setDtMsg(t, bad) { const el = $("#dtMsg"); el.textContent = t; el.classList.toggle("bad", !!bad); }
+function renderData() {
+  const last = db.updatedAt ? new Date(db.updatedAt).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }) : "pas encore modifié";
+  $("#dtInfo").innerHTML = `<li>${plural(shinyUnion().size, "Pokémon en shiny", "Pokémon en shiny")}</li><li>${db.cards.size} Pokémon avec une carte</li><li>${plural(db.journal.length, "entrée au journal", "entrées au journal")}</li><li>Dernière modification : ${esc(last)}</li>`;
+  $("#dtStore").hidden = storageOk;
+}
+function initData() {
+  views.data = { dirty: true, render: renderData };
+  $("#dtExport").addEventListener("click", () => { downloadFile(`pokehub-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(exportData(), null, 2)); setDtMsg("Sauvegarde téléchargée."); });
+  $("#dtImportBtn").addEventListener("click", () => $("#dtFile").click());
+  $("#dtFile").addEventListener("change", async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const mode = importMode(), n = normalizeData(JSON.parse(await f.text()));
+      if (mode === "replace" && !confirm("Remplacer toutes vos données par cette sauvegarde ?")) return;
+      setDtMsg(report(applyData(n, mode), mode)); excluded.clear();
+    } catch (_) { setDtMsg("Fichier non reconnu : choisissez une sauvegarde Pokéhub (.json).", true); }
+    e.target.value = "";
+  });
+  $("#dtCopy").addEventListener("click", async () => {
+    const code = await makeCode(); $("#dtCodeOut").value = code;
+    try { await navigator.clipboard.writeText(code); setDtMsg("Code copié. Collez-le dans un message ou une note, puis dans l’autre appareil."); }
+    catch (_) { $("#dtCodeOut").select(); setDtMsg("Copiez le code affiché ci-dessus (appui long, puis Copier)."); }
+  });
+  $("#dtApplyCode").addEventListener("click", async () => {
+    const txt = $("#dtCodeIn").value; if (!txt.trim()) { setDtMsg("Collez d’abord un code.", true); return; }
+    try {
+      const mode = importMode(), n = normalizeData(await readCode(txt));
+      if (mode === "replace" && !confirm("Remplacer toutes vos données par ce code ?")) return;
+      setDtMsg(report(applyData(n, mode), mode)); excluded.clear(); $("#dtCodeIn").value = "";
+    } catch (_) { setDtMsg("Code invalide ou incomplet : copiez-le en entier depuis l’autre appareil.", true); }
+  });
+  $("#dtReset").addEventListener("click", () => {
+    if (!confirm("Revenir aux données d’origine de vos tableurs ? Vos modifications seront perdues.")) return;
+    seedDB(); excluded.clear(); touch(); setDtMsg("Données d’origine restaurées.");
+  });
+  $("#dtWipe").addEventListener("click", () => {
+    if (!confirm("Tout effacer (shiny, cartes, journal) ? Pensez à exporter une sauvegarde avant.")) return;
+    db.shiny = {}; db.cards = new Set(); db.journal = []; excluded.clear(); touch(); setDtMsg("Toutes les données ont été effacées.");
+  });
+  let deferred = null;
+  window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; $("#dtInstall").hidden = false; });
+  $("#dtInstall").addEventListener("click", async () => { if (!deferred) return; deferred.prompt(); await deferred.userChoice.catch(() => {}); deferred = null; $("#dtInstall").hidden = true; });
+}
+
+/* ============================================================
+   DÉMARRAGE
+   ============================================================ */
+function initApp() {
+  loadDB();
+  initWheel(); initShiny(); initCards(); initData();
+  $$("#tabs [data-tab]").forEach(b => b.addEventListener("click", () => show(b.dataset.tab)));
+  window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (TABS.includes(h) && h !== activeView) show(h); });
+  for (const k in views) views[k].dirty = true;
+  renderHeader();
+  const h = location.hash.slice(1);
+  show(TABS.includes(h) ? h : "wheel");
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+initApp();
+
+</script>
+</body>
+</html>
