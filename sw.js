@@ -1,5 +1,5 @@
 /* Pokéhub : fonctionne hors-ligne. Changez VERSION à chaque mise à jour de l'application. */
-const VERSION = "pokehub-v1";
+const VERSION = "pokehub-v2";
 const ART = "pokehub-art";
 const SHELL = ["./", "./index.html", "./sprites.webp", "./sprites-shiny.webp", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });

@@ -272,6 +272,10 @@ details.sub { margin: 12px 0 0; } details.sub summary { padding: 4px 0; font-siz
 .howto { font-size: .92rem; color: var(--muted); } .howto li { margin: 4px 0; } .howto ol, .howto ul { padding-left: 20px; margin: 6px 0; } .howto strong { color: var(--text); }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
+.field { display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: .85rem; }
+#syRepo, #syToken { width: 100%; min-height: 40px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); }
+#syPanel details.howto { margin: 4px 0 8px; } #syPanel details.howto summary { cursor: pointer; color: var(--text); }
+
 </style>
 </head>
 <body>
@@ -381,8 +385,22 @@ details.sub { margin: 12px 0 0; } details.sub summary { padding: 4px 0; font-siz
 <!-- ================= DONNÉES ================= -->
 <section class="view" id="v-data" hidden>
   <div class="view-head"><div class="bignum"><strong style="font-size:2rem">Mes données</strong></div></div>
+  <p class="warn" id="dtWelcome" hidden style="margin-bottom:16px"><strong>Bienvenue !</strong> L’application démarre vide. Importez votre fichier de départ (<em>mes-donnees-pokehub.json</em>) avec « Importer un fichier », ou connectez la synchronisation si vous l’avez déjà configurée sur un autre appareil.</p>
   <div class="dt-grid">
     <section class="panel"><h2>Où j’en suis</h2><ul id="dtInfo"></ul><p class="warn" id="dtStore" hidden>Le navigateur bloque le stockage local : rien ne sera conservé. Exportez une sauvegarde avant de quitter.</p></section>
+    <section class="panel" id="syPanel"><h2>Synchronisation automatique</h2>
+      <div id="syOff"><p>PC et téléphone se mettent à jour tout seuls, grâce à un fichier dans un dépôt GitHub <strong>privé</strong> à vous. Sans votre jeton, personne ne peut lire ni modifier vos données.</p>
+        <details class="howto"><summary><strong>Comment faire (5 minutes, une seule fois)</strong></summary><ol>
+          <li>Sur github.com, créez un dépôt <strong>privé</strong> (par exemple <em>pokehub-donnees</em>) en cochant « Add a README ». Ce n’est pas le dépôt du site.</li>
+          <li>Allez dans <em>Settings</em>, <em>Developer settings</em>, <em>Personal access tokens</em>, <em>Fine-grained tokens</em>, puis <em>Generate new token</em>.</li>
+          <li><em>Repository access</em> : <strong>Only select repositories</strong>, puis ce dépôt privé. <em>Repository permissions</em> : <strong>Contents : Read and write</strong>. Expiration : la plus longue proposée.</li>
+          <li>Copiez le jeton (il ne s’affiche qu’une fois), puis collez-le ci-dessous avec le nom du dépôt. Faites de même sur chaque appareil, avec le même dépôt et le même jeton.</li></ol></details>
+        <label class="field">Dépôt privé<input type="text" id="syRepo" placeholder="votre-pseudo/pokehub-donnees" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+        <label class="field">Jeton d’accès<input type="password" id="syToken" placeholder="github_pat_…" autocomplete="off" spellcheck="false"></label>
+        <div class="row"><button type="button" class="btn-primary" id="syConnect">Se connecter</button></div></div>
+      <div id="syOn" hidden><p>Connecté au dépôt <strong id="syRepoShown"></strong>. Les changements partent tout seuls quelques secondes après chaque modification.</p>
+        <div class="row"><button type="button" class="btn-primary" id="syNow">Synchroniser maintenant</button><button type="button" class="btn-ghost danger" id="syDisconnect">Se déconnecter</button></div></div>
+      <p class="dt-msg" id="syState" role="status" style="margin:0"></p></section>
     <section class="panel"><h2>Quand j’importe des données…</h2>
       <div class="modes">
         <label><input type="radio" name="dtmode" value="merge" checked><span><strong>Fusionner</strong> : ajoute ce qui manque, ne retire rien. Le plus sûr.</span></label>
@@ -412,7 +430,7 @@ details.sub { margin: 12px 0 0; } details.sub summary { padding: 4px 0; font-siz
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 <script>
 const RAW=[["Bulbizarre",1,0,4,7],["Herbizarre",1,0,4,7],["Florizarre",1,0,4,7],["Salamèche",1,0,1,-1],["Reptincel",1,0,1,-1],["Dracaufeu",1,0,1,9],["Carapuce",1,0,2,-1],["Carabaffe",1,0,2,-1],["Tortank",1,0,2,-1],["Chenipan",1,0,11,-1],["Chrysacier",1,0,11,-1],["Papilusion",1,0,11,9],["Aspicot",1,0,11,7],["Coconfort",1,0,11,7],["Dardargnan",1,0,11,7],["Roucool",1,0,0,9],["Roucoups",1,0,0,9],["Roucarnage",1,0,0,9],["Rattata",1,0,0,-1],["Rattatac",1,0,0,-1],["Piafabec",1,0,0,9],["Rapasdepic",1,0,0,9],["Abo",1,0,7,-1],["Arbok",1,0,7,-1],["Pikachu",1,0,3,-1],["Raichu",1,0,3,-1],["Sabelette",1,0,8,-1],["Sablaireau",1,0,8,-1],["Nidoran♀",1,0,7,-1],["Nidorina",1,0,7,-1],["Nidoqueen",1,0,7,8],["Nidoran♂",1,0,7,-1],["Nidorino",1,0,7,-1],["Nidoking",1,0,7,8],["Mélofée",1,0,17,-1],["Mélodelfe",1,0,17,-1],["Goupix",1,0,1,-1],["Feunard",1,0,1,-1],["Rondoudou",1,0,0,17],["Grodoudou",1,0,0,17],["Nosferapti",1,0,7,9],["Nosferalto",1,0,7,9],["Mystherbe",1,0,4,7],["Ortide",1,0,4,7],["Rafflesia",1,0,4,7],["Paras",1,0,11,4],["Parasect",1,0,11,4],["Mimitoss",1,0,11,7],["Aéromite",1,0,11,7],["Taupiqueur",1,0,8,-1],["Triopikeur",1,0,8,-1],["Miaouss",1,0,0,-1],["Persian",1,0,0,-1],["Psykokwak",1,0,2,-1],["Akwakwak",1,0,2,-1],["Férosinge",1,0,6,-1],["Colossinge",1,0,6,-1],["Caninos",1,0,1,-1],["Arcanin",1,0,1,-1],["Ptitard",1,0,2,-1],["Têtarte",1,0,2,-1],["Tartard",1,0,2,6],["Abra",1,0,10,-1],["Kadabra",1,0,10,-1],["Alakazam",1,0,10,-1],["Machoc",1,0,6,-1],["Machopeur",1,0,6,-1],["Mackogneur",1,0,6,-1],["Chétiflor",1,0,4,7],["Boustiflor",1,0,4,7],["Empiflor",1,0,4,7],["Tentacool",1,0,2,7],["Tentacruel",1,0,2,7],["Racaillou",1,0,12,8],["Gravalanch",1,0,12,8],["Grolem",1,0,12,8],["Ponyta",1,0,1,-1],["Galopa",1,0,1,-1],["Ramoloss",1,0,2,10],["Flagadoss",1,0,2,10],["Magnéti",1,0,3,16],["Magnéton",1,0,3,16],["Canarticho",1,0,0,9],["Doduo",1,0,0,9],["Dodrio",1,0,0,9],["Otaria",1,0,2,-1],["Lamantine",1,0,2,5],["Tadmorv",1,0,7,-1],["Grotadmorv",1,0,7,-1],["Kokiyas",1,0,2,-1],["Crustabri",1,0,2,5],["Fantominus",1,0,13,7],["Spectrum",1,0,13,7],["Ectoplasma",1,0,13,7],["Onix",1,0,12,8],["Soporifik",1,0,10,-1],["Hypnomade",1,0,10,-1],["Krabby",1,0,2,-1],["Krabboss",1,0,2,-1],["Voltorbe",1,0,3,-1],["Électrode",1,0,3,-1],["Noeunoeuf",1,0,4,10],["Noadkoko",1,0,4,10],["Osselait",1,0,8,-1],["Ossatueur",1,0,8,-1],["Kicklee",1,0,6,-1],["Tygnon",1,0,6,-1],["Excelangue",1,0,0,-1],["Smogo",1,0,7,-1],["Smogogo",1,0,7,-1],["Rhinocorne",1,0,8,12],["Rhinoféros",1,0,8,12],["Leveinard",1,0,0,-1],["Saquedeneu",1,0,4,-1],["Kangourex",1,0,0,-1],["Hypotrempe",1,0,2,-1],["Hypocéan",1,0,2,-1],["Poissirène",1,0,2,-1],["Poissoroy",1,0,2,-1],["Stari",1,0,2,-1],["Staross",1,0,2,10],["M. Mime",1,0,10,17],["Insécateur",1,0,11,9],["Lippoutou",1,0,5,10],["Élektek",1,0,3,-1],["Magmar",1,0,1,-1],["Scarabrute",1,0,11,-1],["Tauros",1,0,0,-1],["Magicarpe",1,0,2,-1],["Léviator",1,0,2,9],["Lokhlass",1,0,2,5],["Métamorph",1,0,0,-1],["Évoli",1,0,0,-1],["Aquali",1,0,2,-1],["Voltali",1,0,3,-1],["Pyroli",1,0,1,-1],["Porygon",1,0,0,-1],["Amonita",1,0,12,2],["Amonistar",1,0,12,2],["Kabuto",1,0,12,2],["Kabutops",1,0,12,2],["Ptéra",1,0,12,9],["Ronflex",1,0,0,-1],["Artikodin",1,1,5,9],["Électhor",1,1,3,9],["Sulfura",1,1,1,9],["Minidraco",1,0,14,-1],["Draco",1,0,14,-1],["Dracolosse",1,0,14,9],["Mewtwo",1,1,10,-1],["Mew",1,2,10,-1],["Germignon",2,0,4,-1],["Macronium",2,0,4,-1],["Méganium",2,0,4,-1],["Héricendre",2,0,1,-1],["Feurisson",2,0,1,-1],["Typhlosion",2,0,1,-1],["Kaiminus",2,0,2,-1],["Crocrodil",2,0,2,-1],["Aligatueur",2,0,2,-1],["Fouinette",2,0,0,-1],["Fouinar",2,0,0,-1],["Hoothoot",2,0,0,9],["Noarfang",2,0,0,9],["Coxy",2,0,11,9],["Coxyclaque",2,0,11,9],["Mimigal",2,0,11,7],["Migalos",2,0,11,7],["Nostenfer",2,0,7,9],["Loupio",2,0,2,3],["Lanturn",2,0,2,3],["Pichu",2,4,3,-1],["Mélo",2,4,17,-1],["Toudoudou",2,4,0,17],["Togepi",2,4,17,-1],["Togetic",2,0,17,9],["Natu",2,0,10,9],["Xatu",2,0,10,9],["Wattouat",2,0,3,-1],["Lainergie",2,0,3,-1],["Pharamp",2,0,3,-1],["Joliflor",2,0,4,-1],["Marill",2,0,2,17],["Azumarill",2,0,2,17],["Simularbre",2,0,12,-1],["Tarpaud",2,0,2,-1],["Granivol",2,0,4,9],["Floravol",2,0,4,9],["Cotovol",2,0,4,9],["Capumain",2,0,0,-1],["Tournegrin",2,0,4,-1],["Héliatronc",2,0,4,-1],["Yanma",2,0,11,9],["Axoloto",2,0,2,8],["Maraiste",2,0,2,8],["Mentali",2,0,10,-1],["Noctali",2,0,15,-1],["Cornèbre",2,0,15,9],["Roigada",2,0,2,10],["Feuforêve",2,0,13,-1],["Zarbi",2,0,10,-1],["Qulbutoké",2,0,10,-1],["Girafarig",2,0,0,10],["Pomdepik",2,0,11,-1],["Foretress",2,0,11,16],["Insolourdo",2,0,0,-1],["Scorplane",2,0,8,9],["Steelix",2,0,16,8],["Snubbull",2,0,17,-1],["Granbull",2,0,17,-1],["Qwilfish",2,0,2,7],["Cizayox",2,0,11,16],["Caratroc",2,0,11,12],["Scarhino",2,0,11,6],["Farfuret",2,0,15,5],["Teddiursa",2,0,0,-1],["Ursaring",2,0,0,-1],["Limagma",2,0,1,-1],["Volcaropod",2,0,1,12],["Marcacrin",2,0,5,8],["Cochignon",2,0,5,8],["Corayon",2,0,2,12],["Rémoraid",2,0,2,-1],["Octillery",2,0,2,-1],["Cadoizo",2,0,5,9],["Démanta",2,0,2,9],["Airmure",2,0,16,9],["Malosse",2,0,15,1],["Démolosse",2,0,15,1],["Hyporoi",2,0,2,14],["Phanpy",2,0,8,-1],["Donphan",2,0,8,-1],["Porygon2",2,0,0,-1],["Cerfrousse",2,0,0,-1],["Queulorior",2,0,0,-1],["Debugant",2,4,6,-1],["Kapoera",2,0,6,-1],["Lippouti",2,4,5,10],["Élekid",2,4,3,-1],["Magby",2,4,1,-1],["Écrémeuh",2,0,0,-1],["Leuphorie",2,0,0,-1],["Raikou",2,1,3,-1],["Entei",2,1,1,-1],["Suicune",2,1,2,-1],["Embrylex",2,0,12,8],["Ymphect",2,0,12,8],["Tyranocif",2,0,12,15],["Lugia",2,1,10,9],["Ho-Oh",2,1,1,9],["Celebi",2,2,10,4],["Arcko",3,0,4,-1],["Massko",3,0,4,-1],["Jungko",3,0,4,-1],["Poussifeu",3,0,1,-1],["Galifeu",3,0,1,6],["Braségali",3,0,1,6],["Gobou",3,0,2,-1],["Flobio",3,0,2,8],["Laggron",3,0,2,8],["Medhyèna",3,0,15,-1],["Grahyèna",3,0,15,-1],["Zigzaton",3,0,0,-1],["Linéon",3,0,0,-1],["Chenipotte",3,0,11,-1],["Armulys",3,0,11,-1],["Charmillon",3,0,11,9],["Blindalys",3,0,11,-1],["Papinox",3,0,11,7],["Nénupiot",3,0,2,4],["Lombre",3,0,2,4],["Ludicolo",3,0,2,4],["Grainipiot",3,0,4,-1],["Pifeuil",3,0,4,15],["Tengalice",3,0,4,15],["Nirondelle",3,0,0,9],["Hélédelle",3,0,0,9],["Goélise",3,0,2,9],["Bekipan",3,0,2,9],["Tarsal",3,0,10,17],["Kirlia",3,0,10,17],["Gardevoir",3,0,10,17],["Arakdo",3,0,11,2],["Maskadra",3,0,11,9],["Balignon",3,0,4,-1],["Chapignon",3,0,4,6],["Parecool",3,0,0,-1],["Vigoroth",3,0,0,-1],["Monaflèmit",3,0,0,-1],["Ningale",3,0,11,8],["Ninjask",3,0,11,9],["Munja",3,0,11,13],["Chuchmur",3,0,0,-1],["Ramboum",3,0,0,-1],["Brouhabam",3,0,0,-1],["Makuhita",3,0,6,-1],["Hariyama",3,0,6,-1],["Azurill",3,4,0,17],["Tarinor",3,0,12,-1],["Skitty",3,0,0,-1],["Delcatty",3,0,0,-1],["Ténéfix",3,0,15,13],["Mysdibule",3,0,16,17],["Galekid",3,0,16,12],["Galegon",3,0,16,12],["Galeking",3,0,16,12],["Méditikka",3,0,6,10],["Charmina",3,0,6,10],["Dynavolt",3,0,3,-1],["Élecsprint",3,0,3,-1],["Posipi",3,0,3,-1],["Négapi",3,0,3,-1],["Muciole",3,0,11,-1],["Lumivole",3,0,11,-1],["Rosélia",3,0,4,7],["Gloupti",3,0,7,-1],["Avaltout",3,0,7,-1],["Carvanha",3,0,2,15],["Sharpedo",3,0,2,15],["Wailmer",3,0,2,-1],["Wailord",3,0,2,-1],["Chamallot",3,0,1,8],["Camérupt",3,0,1,8],["Chartor",3,0,1,-1],["Spoink",3,0,10,-1],["Groret",3,0,10,-1],["Spinda",3,0,0,-1],["Kraknoix",3,0,8,-1],["Vibraninf",3,0,8,14],["Libégon",3,0,8,14],["Cacnea",3,0,4,-1],["Cacturne",3,0,4,15],["Tylton",3,0,0,9],["Altaria",3,0,14,9],["Mangriff",3,0,0,-1],["Séviper",3,0,7,-1],["Séléroc",3,0,12,10],["Solaroc",3,0,12,10],["Barloche",3,0,2,8],["Barbicha",3,0,2,8],["Écrapince",3,0,2,-1],["Colhomard",3,0,2,15],["Balbuto",3,0,8,10],["Kaorine",3,0,8,10],["Lilia",3,0,12,4],["Vacilys",3,0,12,4],["Anorith",3,0,12,11],["Armaldo",3,0,12,11],["Barpau",3,0,2,-1],["Milobellus",3,0,2,-1],["Morphéo",3,0,0,-1],["Kecleon",3,0,0,-1],["Polichombr",3,0,13,-1],["Branette",3,0,13,-1],["Skelénox",3,0,13,-1],["Téraclope",3,0,13,-1],["Tropius",3,0,4,9],["Éoko",3,0,10,-1],["Absol",3,0,15,-1],["Okéoké",3,4,10,-1],["Stalgamin",3,0,5,-1],["Oniglali",3,0,5,-1],["Obalie",3,0,5,2],["Phogleur",3,0,5,2],["Kaimorse",3,0,5,2],["Coquiperl",3,0,2,-1],["Serpang",3,0,2,-1],["Rosabyss",3,0,2,-1],["Relicanth",3,0,2,12],["Lovdisc",3,0,2,-1],["Draby",3,0,14,-1],["Drackhaus",3,0,14,-1],["Drattak",3,0,14,9],["Terhal",3,0,16,10],["Métang",3,0,16,10],["Métalosse",3,0,16,10],["Regirock",3,1,12,-1],["Regice",3,1,5,-1],["Registeel",3,1,16,-1],["Latias",3,1,14,10],["Latios",3,1,14,10],["Kyogre",3,1,2,-1],["Groudon",3,1,8,-1],["Rayquaza",3,1,14,9],["Jirachi",3,2,16,10],["Deoxys",3,2,10,-1],["Tortipouss",4,0,4,-1],["Boskara",4,0,4,-1],["Torterra",4,0,4,8],["Ouisticram",4,0,1,-1],["Chimpenfeu",4,0,1,6],["Simiabraz",4,0,1,6],["Tiplouf",4,0,2,-1],["Prinplouf",4,0,2,-1],["Pingoléon",4,0,2,16],["Étourmi",4,0,0,9],["Étourvol",4,0,0,9],["Étouraptor",4,0,0,9],["Keunotor",4,0,0,-1],["Castorno",4,0,0,2],["Crikzik",4,0,11,-1],["Mélokrik",4,0,11,-1],["Lixy",4,0,3,-1],["Luxio",4,0,3,-1],["Luxray",4,0,3,-1],["Rozbouton",4,4,4,7],["Roserade",4,0,4,7],["Kranidos",4,0,12,-1],["Charkos",4,0,12,-1],["Dinoclier",4,0,12,16],["Bastiodon",4,0,12,16],["Cheniti",4,0,11,-1],["Cheniselle",4,0,11,4],["Papilord",4,0,11,9],["Apitrini",4,0,11,9],["Apireine",4,0,11,9],["Pachirisu",4,0,3,-1],["Mustébouée",4,0,2,-1],["Mustéflott",4,0,2,-1],["Ceribou",4,0,4,-1],["Ceriflor",4,0,4,-1],["Sancoki",4,0,2,-1],["Tritosor",4,0,2,8],["Capidextre",4,0,0,-1],["Baudrive",4,0,13,9],["Grodrive",4,0,13,9],["Laporeille",4,0,0,-1],["Lockpin",4,0,0,-1],["Magirêve",4,0,13,-1],["Corboss",4,0,15,9],["Chaglam",4,0,0,-1],["Chaffreux",4,0,0,-1],["Korillon",4,4,10,-1],["Moufouette",4,0,7,15],["Moufflair",4,0,7,15],["Archéomire",4,0,16,10],["Archéodong",4,0,16,10],["Manzaï",4,4,12,-1],["Mime Jr.",4,4,10,17],["Ptiravi",4,4,0,-1],["Pijako",4,0,0,9],["Spiritomb",4,0,13,15],["Griknot",4,0,14,8],["Carmache",4,0,14,8],["Carchacrok",4,0,14,8],["Goinfrex",4,4,0,-1],["Riolu",4,4,6,-1],["Lucario",4,0,6,16],["Hippopotas",4,0,8,-1],["Hippodocus",4,0,8,-1],["Rapion",4,0,7,11],["Drascore",4,0,7,15],["Cradopaud",4,0,7,6],["Coatox",4,0,7,6],["Vortente",4,0,4,-1],["Écayon",4,0,2,-1],["Luminéon",4,0,2,-1],["Babimanta",4,4,2,9],["Blizzi",4,0,4,5],["Blizzaroi",4,0,4,5],["Dimoret",4,0,15,5],["Magnézone",4,0,3,16],["Coudlangue",4,0,0,-1],["Rhinastoc",4,0,8,12],["Bouldeneu",4,0,4,-1],["Élekable",4,0,3,-1],["Maganon",4,0,1,-1],["Togekiss",4,0,17,9],["Yanmega",4,0,11,9],["Phyllali",4,0,4,-1],["Givrali",4,0,5,-1],["Scorvol",4,0,8,9],["Mammochon",4,0,5,8],["Porygon-Z",4,0,0,-1],["Gallame",4,0,10,6],["Tarinorme",4,0,12,16],["Noctunoir",4,0,13,-1],["Momartik",4,0,5,13],["Motisma",4,0,3,13],["Créhelf",4,1,10,-1],["Créfollet",4,1,10,-1],["Créfadet",4,1,10,-1],["Dialga",4,1,16,14],["Palkia",4,1,2,14],["Heatran",4,1,1,16],["Regigigas",4,1,0,-1],["Giratina",4,1,13,14],["Cresselia",4,1,10,-1],["Phione",4,2,2,-1],["Manaphy",4,2,2,-1],["Darkrai",4,2,15,-1],["Shaymin",4,2,4,-1],["Arceus",4,2,0,-1],["Victini",5,2,10,1],["Vipélierre",5,0,4,-1],["Lianaja",5,0,4,-1],["Majaspic",5,0,4,-1],["Gruikui",5,0,1,-1],["Grotichon",5,0,1,6],["Roitiflam",5,0,1,6],["Moustillon",5,0,2,-1],["Mateloutre",5,0,2,-1],["Clamiral",5,0,2,-1],["Ratentif",5,0,0,-1],["Miradar",5,0,0,-1],["Ponchiot",5,0,0,-1],["Ponchien",5,0,0,-1],["Mastouffe",5,0,0,-1],["Chacripan",5,0,15,-1],["Léopardus",5,0,15,-1],["Feuillajou",5,0,4,-1],["Feuiloutan",5,0,4,-1],["Flamajou",5,0,1,-1],["Flamoutan",5,0,1,-1],["Flotajou",5,0,2,-1],["Flotoutan",5,0,2,-1],["Munna",5,0,10,-1],["Mushana",5,0,10,-1],["Poichigeon",5,0,0,9],["Colombeau",5,0,0,9],["Déflaisan",5,0,0,9],["Zébibron",5,0,3,-1],["Zéblitz",5,0,3,-1],["Nodulithe",5,0,12,-1],["Géolithe",5,0,12,-1],["Gigalithe",5,0,12,-1],["Chovsourir",5,0,10,9],["Rhinolove",5,0,10,9],["Rototaupe",5,0,8,-1],["Minotaupe",5,0,8,16],["Nanméouïe",5,0,0,-1],["Charpenti",5,0,6,-1],["Ouvrifier",5,0,6,-1],["Bétochef",5,0,6,-1],["Tritonde",5,0,2,-1],["Batracné",5,0,2,8],["Crapustule",5,0,2,8],["Judokrak",5,0,6,-1],["Karaclée",5,0,6,-1],["Larveyette",5,0,11,4],["Couverdure",5,0,11,4],["Manternel",5,0,11,4],["Venipatte",5,0,11,7],["Scobolide",5,0,11,7],["Brutapode",5,0,11,7],["Doudouvet",5,0,4,17],["Farfaduvet",5,0,4,17],["Chlorobule",5,0,4,-1],["Fragilady",5,0,4,-1],["Bargantua",5,0,2,-1],["Mascaïman",5,0,8,15],["Escroco",5,0,8,15],["Crocorible",5,0,8,15],["Darumarond",5,0,1,-1],["Darumacho",5,0,1,-1],["Maracachi",5,0,4,-1],["Crabicoque",5,0,11,12],["Crabaraque",5,0,11,12],["Baggiguane",5,0,15,6],["Baggaïd",5,0,15,6],["Cryptéro",5,0,10,9],["Tutafeh",5,0,13,-1],["Tutankafer",5,0,13,-1],["Carapagos",5,0,2,12],["Mégapagos",5,0,2,12],["Arkéapti",5,0,12,9],["Aéroptéryx",5,0,12,9],["Miamiasme",5,0,7,-1],["Miasmax",5,0,7,-1],["Zorua",5,0,15,-1],["Zoroark",5,0,15,-1],["Chinchidou",5,0,0,-1],["Pashmilla",5,0,0,-1],["Scrutella",5,0,10,-1],["Mesmérella",5,0,10,-1],["Sidérella",5,0,10,-1],["Nucléos",5,0,10,-1],["Méios",5,0,10,-1],["Symbios",5,0,10,-1],["Couaneton",5,0,2,9],["Lakmécygne",5,0,2,9],["Sorbébé",5,0,5,-1],["Sorboul",5,0,5,-1],["Sorbouboul",5,0,5,-1],["Vivaldaim",5,0,0,4],["Haydaim",5,0,0,4],["Emolga",5,0,3,9],["Carabing",5,0,11,-1],["Lançargot",5,0,11,16],["Trompignon",5,0,4,7],["Gaulet",5,0,4,7],["Viskuse",5,0,2,13],["Moyade",5,0,2,13],["Mamanbo",5,0,2,-1],["Statitik",5,0,11,3],["Mygavolt",5,0,11,3],["Grindur",5,0,4,16],["Noacier",5,0,4,16],["Tic",5,0,16,-1],["Clic",5,0,16,-1],["Cliticlic",5,0,16,-1],["Anchwatt",5,0,3,-1],["Lampéroie",5,0,3,-1],["Ohmassacre",5,0,3,-1],["Lewsor",5,0,10,-1],["Neitram",5,0,10,-1],["Funécire",5,0,13,1],["Mélancolux",5,0,13,1],["Lugulabre",5,0,13,1],["Coupenotte",5,0,14,-1],["Incisache",5,0,14,-1],["Tranchodon",5,0,14,-1],["Polarhume",5,0,5,-1],["Polagriffe",5,0,5,-1],["Hexagel",5,0,5,-1],["Escargaume",5,0,11,-1],["Limaspeed",5,0,11,-1],["Limonde",5,0,8,3],["Kungfouine",5,0,6,-1],["Shaofouine",5,0,6,-1],["Drakkarmin",5,0,14,-1],["Gringolem",5,0,8,13],["Golemastoc",5,0,8,13],["Scalpion",5,0,15,16],["Scalproie",5,0,15,16],["Frison",5,0,0,-1],["Furaiglon",5,0,0,9],["Gueriaigle",5,0,0,9],["Vostourno",5,0,15,9],["Vaututrice",5,0,15,9],["Aflamanoir",5,0,1,-1],["Fermite",5,0,11,16],["Solochi",5,0,15,14],["Diamat",5,0,15,14],["Trioxhydre",5,0,15,14],["Pyronille",5,0,11,1],["Pyrax",5,0,11,1],["Cobaltium",5,1,16,6],["Terrakium",5,1,12,6],["Viridium",5,1,4,6],["Boréas",5,1,9,-1],["Fulguris",5,1,3,9],["Reshiram",5,1,14,1],["Zekrom",5,1,14,3],["Démétéros",5,1,8,9],["Kyurem",5,1,14,5],["Keldeo",5,2,2,6],["Meloetta",5,2,0,10],["Genesect",5,2,11,16],["Marisson",6,0,4,-1],["Boguérisse",6,0,4,-1],["Blindépique",6,0,4,6],["Feunnec",6,0,1,-1],["Roussil",6,0,1,-1],["Goupelin",6,0,1,10],["Grenousse",6,0,2,-1],["Croâporal",6,0,2,-1],["Amphinobi",6,0,2,15],["Sapereau",6,0,0,-1],["Excavarenne",6,0,0,8],["Passerouge",6,0,0,9],["Braisillon",6,0,1,9],["Flambusard",6,0,1,9],["Lépidonille",6,0,11,-1],["Pérégrain",6,0,11,-1],["Prismillon",6,0,11,9],["Hélionceau",6,0,1,0],["Némélios",6,0,1,0],["Flabébé",6,0,17,-1],["Floette",6,0,17,-1],["Florges",6,0,17,-1],["Cabriolaine",6,0,4,-1],["Chevroum",6,0,4,-1],["Pandespiègle",6,0,6,-1],["Pandarbare",6,0,6,15],["Couafarel",6,0,0,-1],["Psystigri",6,0,10,-1],["Mistigrix",6,0,10,-1],["Monorpale",6,0,16,13],["Dimoclès",6,0,16,13],["Exagide",6,0,16,13],["Fluvetin",6,0,17,-1],["Cocotine",6,0,17,-1],["Sucroquin",6,0,17,-1],["Cupcanaille",6,0,17,-1],["Sepiatop",6,0,15,10],["Sepiatroce",6,0,15,10],["Opermine",6,0,12,2],["Golgopathe",6,0,12,2],["Venalgue",6,0,7,2],["Kravarech",6,0,7,14],["Flingouste",6,0,2,-1],["Gamblast",6,0,2,-1],["Galvaran",6,0,3,0],["Iguolta",6,0,3,0],["Ptyranidur",6,0,12,14],["Rexillius",6,0,12,14],["Amagara",6,0,12,5],["Dragmara",6,0,12,5],["Nymphali",6,0,17,-1],["Brutalibré",6,0,6,9],["Dedenne",6,0,3,17],["Strassie",6,0,12,17],["Mucuscule",6,0,14,-1],["Colimucus",6,0,14,-1],["Muplodocus",6,0,14,-1],["Trousselin",6,0,16,17],["Brocélôme",6,0,13,4],["Desséliande",6,0,13,4],["Pitrouille",6,0,13,4],["Banshitrouye",6,0,13,4],["Grelaçon",6,0,5,-1],["Séracrawl",6,0,5,-1],["Sonistrelle",6,0,9,14],["Bruyverne",6,0,9,14],["Xerneas",6,1,17,-1],["Yveltal",6,1,15,9],["Zygarde",6,1,14,8],["Diancie",6,2,12,17],["Hoopa",6,2,10,13],["Volcanion",6,2,1,2],["Brindibou",7,0,4,9],["Efflèche",7,0,4,9],["Archéduc",7,0,4,13],["Flamiaou",7,0,1,-1],["Matoufeu",7,0,1,-1],["Félinferno",7,0,1,15],["Otaquin",7,0,2,-1],["Otarlette",7,0,2,-1],["Oratoria",7,0,2,17],["Picassaut",7,0,0,9],["Piclairon",7,0,0,9],["Bazoucan",7,0,0,9],["Manglouton",7,0,0,-1],["Argouste",7,0,0,-1],["Larvibule",7,0,11,-1],["Chrysapile",7,0,11,3],["Lucanon",7,0,11,3],["Crabagarre",7,0,6,-1],["Crabominable",7,0,6,5],["Plumeline",7,0,1,9],["Bombydou",7,0,11,17],["Rubombelle",7,0,11,17],["Rocabot",7,0,12,-1],["Lougaroc",7,0,12,-1],["Froussardine",7,0,2,-1],["Vorastérie",7,0,7,2],["Prédastérie",7,0,7,2],["Tiboudet",7,0,8,-1],["Bourrinos",7,0,8,-1],["Araqua",7,0,2,11],["Tarenbulle",7,0,2,11],["Mimantis",7,0,4,-1],["Floramantis",7,0,4,-1],["Spododo",7,0,4,17],["Lampignon",7,0,4,17],["Tritox",7,0,7,1],["Malamandre",7,0,7,1],["Nounourson",7,0,0,6],["Chelours",7,0,0,6],["Croquine",7,0,4,-1],["Candine",7,0,4,-1],["Sucreine",7,0,4,-1],["Guérilande",7,0,17,-1],["Gouroutan",7,0,0,10],["Quartermac",7,0,6,-1],["Sovkipou",7,0,11,2],["Sarmuraï",7,0,11,2],["Bacabouh",7,0,13,8],["Trépassable",7,0,13,8],["Concombaffe",7,0,2,-1],["Type:0",7,1,0,-1],["Silvallié",7,1,0,-1],["Météno",7,0,12,9],["Dodoala",7,0,0,-1],["Boumata",7,0,1,14],["Togedemaru",7,0,3,16],["Mimiqui",7,0,13,17],["Denticrisse",7,0,2,10],["Draïeul",7,0,0,14],["Sinistrail",7,0,13,4],["Bébécaille",7,0,14,-1],["Écaïd",7,0,14,6],["Ékaïser",7,0,14,6],["Tokorico",7,1,3,17],["Tokopiyon",7,1,10,17],["Tokotoro",7,1,4,17],["Tokopisco",7,1,2,17],["Cosmog",7,1,10,-1],["Cosmovum",7,1,10,-1],["Solgaleo",7,1,10,16],["Lunala",7,1,10,13],["Zéroïd",7,0,12,7],["Mouscoto",7,0,11,6],["Cancrelove",7,0,11,6],["Câblifère",7,0,3,-1],["Bamboiselle",7,0,16,9],["Katagami",7,0,4,16],["Engloutyran",7,0,15,14],["Necrozma",7,1,10,-1],["Magearna",7,2,16,17],["Marshadow",7,2,6,13],["Vémini",7,0,7,-1],["Mandrillon",7,0,7,14],["Ama-Ama",7,0,12,16],["Pierroteknik",7,0,1,13],["Zeraora",7,2,3,-1],["Meltan",7,2,16,-1],["Melmetal",7,2,16,-1],["Ouistempo",8,0,4,-1],["Badabouin",8,0,4,-1],["Gorythmic",8,0,4,-1],["Flambino",8,0,1,-1],["Lapyro",8,0,1,-1],["Pyrobut",8,0,1,-1],["Larméléon",8,0,2,-1],["Arrozard",8,0,2,-1],["Lézargus",8,0,2,-1],["Rongourmand",8,0,0,-1],["Rongrigou",8,0,0,-1],["Minisange",8,0,9,-1],["Bleuseille",8,0,9,-1],["Corvaillus",8,0,9,16],["Larvadar",8,0,11,-1],["Coléodôme",8,0,11,10],["Astronelle",8,0,11,10],["Goupilou",8,0,15,-1],["Roublenard",8,0,15,-1],["Tournicoton",8,0,4,-1],["Blancoton",8,0,4,-1],["Moumouton",8,0,0,-1],["Moumouflon",8,0,0,-1],["Khélocrok",8,0,2,-1],["Torgamord",8,0,2,12],["Voltoutou",8,0,3,-1],["Fulgudog",8,0,3,-1],["Charbi",8,0,12,-1],["Wagomine",8,0,12,1],["Monthracite",8,0,12,1],["Verpom",8,0,4,14],["Pomdrapi",8,0,4,14],["Dratatin",8,0,4,14],["Dunaja",8,0,8,-1],["Dunaconda",8,0,8,-1],["Nigosier",8,0,9,2],["Embrochet",8,0,2,-1],["Hastacuda",8,0,2,-1],["Toxizap",8,4,3,7],["Salarsen",8,0,3,7],["Grillepattes",8,0,1,11],["Scolocendre",8,0,1,11],["Poulpaf",8,0,6,-1],["Krakos",8,0,6,-1],["Théffroi",8,0,13,-1],["Polthégeist",8,0,13,-1],["Bibichut",8,0,10,-1],["Chapotus",8,0,10,-1],["Sorcilence",8,0,10,17],["Grimalin",8,0,15,17],["Fourbelin",8,0,15,17],["Angoliath",8,0,15,17],["Ixon",8,0,15,0],["Berserkatt",8,0,16,-1],["Corayôme",8,0,13,-1],["Palarticho",8,0,6,-1],["M. Glaquette",8,0,5,10],["Tutétékri",8,0,8,13],["Crèmy",8,0,17,-1],["Charmilly",8,0,17,-1],["Hexadron",8,0,6,-1],["Wattapik",8,0,3,-1],["Frissonille",8,0,5,11],["Beldeneige",8,0,5,11],["Dolman",8,0,12,-1],["Bekaglaçon",8,0,5,-1],["Wimessir",8,0,10,0],["Morpeko",8,0,3,15],["Charibari",8,0,16,-1],["Pachyradjah",8,0,16,-1],["Galvagon",8,0,3,14],["Galvagla",8,0,3,5],["Hydragon",8,0,2,14],["Hydragla",8,0,2,5],["Duralugon",8,0,16,14],["Fantyrm",8,0,14,13],["Dispareptil",8,0,14,13],["Lanssorien",8,0,14,13],["Zacian",8,1,17,-1],["Zamazenta",8,1,6,-1],["Éthernatos",8,1,7,14],["Wushours",8,1,6,-1],["Shifours",8,1,6,15],["Zarude",8,2,15,4],["Regieleki",8,1,3,-1],["Regidrago",8,1,14,-1],["Blizzeval",8,1,5,-1],["Spectreval",8,1,13,-1],["Sylveroy",8,1,10,4],["Cerbyllin",8,0,0,10],["Hachécateur",8,0,11,12],["Ursaking",8,0,8,0],["Paragruel",8,0,2,13],["Farfurex",8,0,6,7],["Qwilpik",8,0,15,7],["Amovénus",8,1,17,9],["Poussacha",9,0,4,-1],["Matourgeon",9,0,4,-1],["Miascarade",9,0,4,15],["Chochodile",9,0,1,-1],["Crocogril",9,0,1,-1],["Flâmigator",9,0,1,13],["Coiffeton",9,0,2,-1],["Canarbello",9,0,2,-1],["Palmaval",9,0,2,6],["Gourmelet",9,0,0,-1],["Fragroin",9,0,0,-1],["Tissenboule",9,0,11,-1],["Filentrappe",9,0,11,-1],["Lilliterelle",9,0,11,-1],["Gambex",9,0,11,15],["Pohm",9,0,3,-1],["Pohmotte",9,0,3,6],["Pohmarmotte",9,0,3,6],["Compagnol",9,0,0,-1],["Famignol",9,0,0,-1],["Pâtachiot",9,0,17,-1],["Briochien",9,0,17,-1],["Olivini",9,0,4,0],["Olivado",9,0,4,0],["Arboliva",9,0,4,0],["Tapatoès",9,0,0,9],["Selutin",9,0,12,-1],["Amassel",9,0,12,-1],["Gigansel",9,0,12,-1],["Charbambin",9,0,1,-1],["Carmadura",9,0,1,10],["Malvalame",9,0,1,13],["Têtampoule",9,0,3,-1],["Ampibidou",9,0,3,-1],["Zapétrel",9,0,3,9],["Fulgulairo",9,0,3,9],["Grondogue",9,0,15,-1],["Dogrino",9,0,15,-1],["Gribouraigne",9,0,7,0],["Tag-Tag",9,0,7,0],["Virovent",9,0,4,13],["Virevorreur",9,0,4,13],["Terracool",9,0,8,4],["Terracruel",9,0,8,4],["Craparoi",9,0,12,-1],["Pimito",9,0,4,-1],["Scovilain",9,0,4,1],["Léboulérou",9,0,11,-1],["Bérasca",9,0,11,10],["Flotillon",9,0,10,-1],["Cléopsytra",9,0,10,-1],["Forgerette",9,0,17,16],["Forgella",9,0,17,16],["Forgelina",9,0,17,16],["Taupikeau",9,0,2,-1],["Triopikeau",9,0,2,-1],["Lestombaile",9,0,9,15],["Dofin",9,0,2,-1],["Superdofin",9,0,2,-1],["Vrombi",9,0,16,7],["Vrombotor",9,0,16,7],["Motorizard",9,0,14,0],["Ferdeter",9,0,16,-1],["Germéclat",9,0,12,7],["Floréclat",9,0,12,7],["Toutombe",9,0,13,-1],["Tomberro",9,0,13,-1],["Flamenroule",9,0,9,6],["Piétacé",9,0,5,-1],["Balbalèze",9,0,5,-1],["Délestin",9,0,2,10],["Oyacata",9,0,2,-1],["Nigirigon",9,0,14,2],["Courrousinge",9,0,6,13],["Terraiste",9,0,7,8],["Farigiraf",9,0,0,10],["Deusolourdo",9,0,0,-1],["Scalpereur",9,0,15,16],["Fort-Ivoire",9,0,8,6],["Hurle-Queue",9,0,17,10],["Fongus-Furie",9,0,4,15],["Flotte-Mèche",9,0,13,17],["Rampe-Ailes",9,0,11,6],["Pelage-Sablé",9,0,3,8],["Roue-de-Fer",9,0,8,16],["Hotte-de-Fer",9,0,5,2],["Paume-de-Fer",9,0,6,3],["Têtes-de-Fer",9,0,15,9],["Mite-de-Fer",9,0,1,7],["Épine-de-Fer",9,0,12,3],["Frigodo",9,0,14,5],["Cryodo",9,0,14,5],["Glaivodo",9,0,14,5],["Mordudor",9,0,13,-1],["Gromago",9,0,16,13],["Chongjian",9,1,15,4],["Baojian",9,1,15,5],["Dinglu",9,1,15,8],["Yuyu",9,1,15,1],["Rugit-Lune",9,0,14,15],["Garde-de-Fer",9,0,17,6],["Koraidon",9,1,6,14],["Miraidon",9,1,3,14],["Serpente-Eau",9,0,2,14],["Vert-de-Fer",9,0,4,10],["Pomdramour",9,0,4,14],["Poltchageist",9,0,4,13],["Théffroyable",9,0,4,13],["Félicanis",9,1,7,6],["Fortusimia",9,1,7,10],["Favianos",9,1,7,17],["Ogerpon",9,1,4,-1],["Pondralugon",9,0,16,14],["Pomdorochi",9,0,4,14],["Feu-Perçant",9,0,1,14],["Ire-Foudre",9,0,3,14],["Roc-de-Fer",9,0,12,10],["Chef-de-Fer",9,0,16,10],["Terapagos",9,1,0,-1],["Pêchaminus",9,2,7,13]];
-const SEED={"shiny":{"usum_l":"10,18,22,24,37,91,136,195-196,219,244,271,274,277,334,385,419,427,446,450,452,469,479,491-492,531,558,561,581,618,624,645,689,695,718,785,795,799","sm_s":"167","go":"4-6,13-18,21-22,25,37-38,63-65,74-76,123,125-126,129-130,133,147-149,179-181,197,227,251,265-267,318-320,329-330,380,410-411,425-428,467,495-498,509-510,543-545,551,607-609,661-663,667-668,686-687,710,722-724,747,821-823,856-858,915-916,928-930,973","sv_e":"878-879,932-934,968","za":"16-17,66,69,93,147-149,179-181,322-323,361,374-375,459-460,543,568,582,607,659,661,667-669,674,677,679,689,702,715"},"missing":"17,29-30,33-34,65,68,71,94,139,141,156-157,160,164,173-174,182,186,195,213,232,236,238-239,249,251-254,260,277,282,290,298,308,314,317,346-348,360,362,367,373,376,380,389,392,395,406,409,411,414,423,433,439-440,446,457,467,481,485,487,489,493-494,496-497,500,503,518,563,565,567,579,584,586,591,606,638-639,647,655,673,692-693,709,716,720,749-750,764,772-773,783-785,787-788,791-795,797-801,803-807,815,829,832-834,837,839,842,845-847,851,853,858,860-867,872-874,880-886,888-889,892,896-899,901,903,905,908,913,927,930,939,948,959,970,974,979,983-985,987,989-990,992,995,1000-1002,1004-1011,1013-1025","journal":[{"label":"Cartes de départ","date":null,"counts":{"g1":268,"g2":123,"g3":171,"g4":109,"g5":242,"g6":118,"g7":79,"g8":44,"g9":39,"doubles":70,"ultra":37,"vieilles":74,"dresseurs":109,"e_eau":26,"e_plante":29,"e_feu":10,"e_elec":25,"e_combat":25,"e_psy":21,"e_obscur":24,"e_acier":17,"e_fee":10,"e_incolore":5,"jcc":87}},{"label":"Paquet d’Alexys","date":null,"counts":{"g1":12,"g2":4,"g3":5,"g4":7,"g5":11,"g6":5,"g7":2,"doubles":30,"ultra":1,"vieilles":6,"e_fee":1,"e_incolore":1}},{"label":"Donné à Alicia","date":null,"counts":{"doubles":-12,"jcc":1}},{"label":"2 boosters","date":"2026-07-10","counts":{"g1":2,"g2":2,"g3":1,"g5":1,"g6":7,"doubles":3,"ultra":2,"dresseurs":2,"e_plante":1,"e_psy":1,"jcc":3}},{"label":"Paquet Alexis","date":"2026-07-10","counts":{"g1":12,"g2":16,"g3":17,"g4":10,"g5":9,"g6":4,"g7":7,"g8":18,"g9":40}},{"label":"8 boosters","date":"2026-07-14","counts":{"g1":4,"g2":7,"g3":12,"g4":5,"g5":3,"g6":8,"g7":5,"g8":1,"g9":4,"doubles":22,"ultra":3,"dresseurs":8,"e_plante":2,"e_feu":1,"e_combat":2,"e_psy":1,"e_obscur":2,"e_acier":1,"jcc":8}},{"label":"Échangé à Mattis","date":"2026-08-08","counts":{"g1":6,"g2":2,"g3":4,"g4":1,"g5":3,"g6":3,"doubles":-15}},{"label":"2 boosters","date":"2026-08-14","counts":{"g1":1,"g3":2,"g4":2,"g5":2,"g6":3,"g7":5,"g8":2,"doubles":3,"ultra":1,"e_feu":1,"e_psy":1,"jcc":2}},{"label":"Classeur Mattis","date":"2026-08-23","counts":{"g1":11,"g2":4,"g3":6,"g4":8,"g5":7,"g6":4,"g7":6,"g8":1,"g9":1,"doubles":20}},{"label":"Brocante Trangé","date":"2026-09-06","counts":{"g1":52,"g2":43,"g3":49,"g4":40,"g5":42,"g6":23,"g7":13,"g8":20,"g9":19,"doubles":91,"dresseurs":76,"e_incolore":4}}]};
+const SEED=null;
 const GAMES = [
   { id: "rb", label: "Rouge / Bleu", gen: 1, noShiny: true, ids: "1-151" },
   { id: "y", label: "Jaune", gen: 1, noShiny: true, ids: "1-151" },
@@ -558,7 +576,8 @@ let storageOk = true;
 const defaultPrefs = () => ({ hunt: "", hide: true, cols: [...DEFAULT_COLS], filters: { sel: {}, modes: {} }, history: [] });
 
 function seedDB() {
-  db.shiny = {};
+  db.shiny = {}; db.journal = [];
+  if (!SEED) { db.cards = new Set(); return; }          // version publique : démarre vide
   for (const [v, r] of Object.entries(SEED.shiny)) db.shiny[v] = parseRanges(r);
   const missing = parseRanges(SEED.missing);
   db.cards = new Set(Array.from({ length: NMAX }, (_, i) => i + 1).filter(i => !missing.has(i)));
@@ -651,8 +670,9 @@ function setCard(id, on, skip) { on ? db.cards.add(id) : db.cards.delete(id); to
 const views = {};
 let activeView = "wheel";
 let rafId = 0;
-function touch(skip) {
+function touch(skip, noSync) {
   unionCache = null; db.updatedAt = Date.now(); saveSoon();
+  if (!noSync) scheduleSync();
   for (const k in views) if (k !== skip) views[k].dirty = true;
   scheduleRender();
 }
@@ -1347,6 +1367,142 @@ function initCards() {
 }
 
 /* ============================================================
+   SYNCHRONISATION AUTOMATIQUE : fichier JSON dans un dépôt GitHub PRIVÉ
+   Le jeton reste uniquement sur l'appareil. Fusion à trois voies :
+   les ajouts ET les retraits des deux appareils sont conservés.
+   ============================================================ */
+const SYNC_KEY = "pokehub:sync", BASE_KEY = "pokehub:syncbase";
+let sync = null;
+try { const c = JSON.parse(localStorage.getItem(SYNC_KEY)); if (c && c.repo && c.token) sync = c; } catch (_) {}
+let syncing = false, syncPending = false, syncTimer = 0;
+const syncInfo = { text: "", bad: false, at: 0 };
+
+const snap = () => ({ shiny: Object.fromEntries(Object.entries(db.shiny).map(([k, s]) => [k, new Set(s)])), cards: new Set(db.cards), journal: db.journal.map(e => ({ ...e, counts: { ...e.counts } })) });
+const serialize = n => ({
+  app: "pokehub", v: 1, updatedAt: Date.now(),
+  shiny: Object.fromEntries(Object.entries(n.shiny).filter(([, s]) => s.size).map(([k, s]) => [k, [...s].sort((a, b) => a - b)])),
+  cards: [...n.cards].sort((a, b) => a - b), journal: n.journal,
+});
+const canon = n => JSON.stringify({ s: Object.keys(n.shiny).sort().filter(k => n.shiny[k].size).map(k => [k, [...n.shiny[k]].sort((a, b) => a - b)]), c: [...n.cards].sort((a, b) => a - b), j: n.journal });
+const asState = n => ({ shiny: n.shiny, cards: n.cards || new Set(), journal: n.journal || [] });
+function loadBase() { try { const raw = localStorage.getItem(BASE_KEY); if (raw) return asState(normalizeData(JSON.parse(raw))); } catch (_) {} return { shiny: {}, cards: new Set(), journal: [] }; }
+function saveBase(n) { try { localStorage.setItem(BASE_KEY, JSON.stringify(serialize(n))); } catch (_) {} }
+
+function mergeSets(base, a, b) {
+  const out = new Set();
+  for (const x of new Set([...base, ...a, ...b])) {
+    if (base.has(x)) { if (a.has(x) && b.has(x)) out.add(x); }      // retiré d'un côté : retiré
+    else if (a.has(x) || b.has(x)) out.add(x);                      // ajouté d'un côté : ajouté
+  }
+  return out;
+}
+function mergeJournal(base, a, b) {
+  const bm = new Map(base.map(e => [e.uid, e])), am = new Map(a.map(e => [e.uid, e])), rm = new Map(b.map(e => [e.uid, e]));
+  const same = (x, y) => JSON.stringify(x) === JSON.stringify(y), out = [];
+  for (const e of [...a, ...b.filter(e => !am.has(e.uid))]) {
+    const inB = bm.has(e.uid), inA = am.has(e.uid), inR = rm.has(e.uid);
+    if (inB && !(inA && inR)) continue;                             // supprimée d'un côté
+    if (inB) out.push(!same(am.get(e.uid), bm.get(e.uid)) ? am.get(e.uid) : rm.get(e.uid));
+    else out.push(inA ? am.get(e.uid) : rm.get(e.uid));
+  }
+  return out;
+}
+function merge3(base, local, remote) {
+  const shiny = {};
+  for (const k of new Set([...Object.keys(base.shiny), ...Object.keys(local.shiny), ...Object.keys(remote.shiny)])) shiny[k] = mergeSets(base.shiny[k] || new Set(), local.shiny[k] || new Set(), remote.shiny[k] || new Set());
+  return { shiny, cards: mergeSets(base.cards, local.cards, remote.cards), journal: mergeJournal(base.journal, local.journal, remote.journal) };
+}
+
+/* ---------- API GitHub ---------- */
+const ghHeaders = () => ({ Authorization: "Bearer " + sync.token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28" });
+const ghUrl = () => `https://api.github.com/repos/${sync.repo}/contents/${encodeURI(sync.path || "pokehub-data.json")}`;
+function httpErr(code) {
+  const msg = code === 401 ? "Jeton refusé ou expiré."
+    : code === 403 ? "Droits insuffisants : le jeton doit avoir « Contents : Read and write » sur ce dépôt."
+      : code === 404 ? "Dépôt introuvable : vérifiez son nom et que le jeton y a accès."
+        : `GitHub a répondu une erreur (${code}).`;
+  return Object.assign(new Error(msg), { code });
+}
+const toB64 = u8 => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s); };
+async function ghGet() {
+  const r = await fetch(ghUrl(), { headers: ghHeaders(), cache: "no-store" });
+  if (r.status === 404) return null;
+  if (!r.ok) throw httpErr(r.status);
+  const j = await r.json();
+  const bin = atob(String(j.content).replace(/\s/g, "")), u = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return { sha: j.sha, data: JSON.parse(new TextDecoder().decode(u)) };
+}
+async function ghPut(obj, sha) {
+  const body = { message: "Pokéhub : synchronisation", content: toB64(new TextEncoder().encode(JSON.stringify(obj))) };
+  if (sha) body.sha = sha;
+  const r = await fetch(ghUrl(), { method: "PUT", headers: { ...ghHeaders(), "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!r.ok) throw httpErr(r.status);
+}
+
+function setSyncState(text, bad = false) { syncInfo.text = text; syncInfo.bad = bad; renderSyncUi(); }
+async function syncNow() {
+  if (!sync) return { ok: false, msg: "Non connecté." };
+  if (syncing) { syncPending = true; return { ok: true }; }
+  if (navigator.onLine === false) { setSyncState("Hors-ligne : la synchronisation reprendra plus tard."); return { ok: false, msg: "Hors-ligne." }; }
+  syncing = true; setSyncState("Synchronisation…");
+  try {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const remote = await ghGet(), local = snap(), base = loadBase();
+      const rs = remote ? asState(normalizeData(remote.data)) : null;
+      const merged = rs ? merge3(base, local, rs) : local;
+      const changedLocal = canon(merged) !== canon(local);
+      if (changedLocal) { db.shiny = merged.shiny; db.cards = merged.cards; db.journal = merged.journal; }
+      if (!rs || canon(merged) !== canon(rs)) {
+        try { await ghPut(serialize(merged), remote && remote.sha); }
+        catch (e) { if ((e.code === 409 || e.code === 422) && attempt < 2) continue; throw e; }
+      }
+      saveBase(merged);
+      if (changedLocal) touch(undefined, true);
+      syncInfo.at = Date.now();
+      setSyncState("Synchronisé à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) + ".");
+      return { ok: true };
+    }
+    throw httpErr(409);
+  } catch (e) {
+    const msg = e.code ? e.message : "Pas de connexion : la synchronisation reprendra plus tard.";
+    setSyncState(msg, !!e.code); return { ok: false, msg, code: e.code };
+  } finally {
+    syncing = false;
+    if (syncPending) { syncPending = false; scheduleSync(); }
+  }
+}
+function scheduleSync() { if (!sync) return; clearTimeout(syncTimer); syncTimer = setTimeout(() => syncNow(), 4000); }
+
+function renderSyncUi() {
+  if (!$("#syPanel")) return;
+  $("#syOff").hidden = $("#syOn").hidden = true;
+  (sync ? $("#syOn") : $("#syOff")).hidden = false;
+  if (sync) $("#syRepoShown").textContent = sync.repo;
+  const st = $("#syState"); st.textContent = syncInfo.text; st.classList.toggle("bad", syncInfo.bad);
+}
+function initSync() {
+  renderSyncUi();
+  $("#syConnect").addEventListener("click", async () => {
+    const repo = $("#syRepo").value.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\.git$/, "").replace(/\/$/, ""), token = $("#syToken").value.trim();
+    if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) { setSyncState("Indiquez le dépôt sous la forme pseudo/nom-du-depot.", true); return; }
+    if (token.length < 20) { setSyncState("Collez le jeton d’accès complet.", true); return; }
+    sync = { repo, token, path: "pokehub-data.json" };
+    const r = await syncNow();
+    if (r.ok) { try { localStorage.setItem(SYNC_KEY, JSON.stringify(sync)); } catch (_) {} $("#syToken").value = ""; renderSyncUi(); }
+    else { sync = null; setSyncState(r.msg, true); }
+  });
+  $("#syNow").addEventListener("click", () => syncNow());
+  $("#syDisconnect").addEventListener("click", () => {
+    if (!confirm("Se déconnecter de la synchronisation ? Vos données restent sur cet appareil.")) return;
+    sync = null; try { localStorage.removeItem(SYNC_KEY); localStorage.removeItem(BASE_KEY); } catch (_) {}
+    syncInfo.text = ""; renderSyncUi();
+  });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && sync) syncNow(); });
+  window.addEventListener("online", () => { if (sync) syncNow(); });
+  if (sync) setTimeout(() => syncNow(), 1200);
+}
+
+/* ============================================================
    DONNÉES : sauvegarde, synchronisation, installation
    ============================================================ */
 const b64u = u8 => { let s = ""; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode(...u8.subarray(i, i + 0x8000)); return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); };
@@ -1381,6 +1537,7 @@ function renderData() {
   const last = db.updatedAt ? new Date(db.updatedAt).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }) : "pas encore modifié";
   $("#dtInfo").innerHTML = `<li>${plural(shinyUnion().size, "Pokémon en shiny", "Pokémon en shiny")}</li><li>${db.cards.size} Pokémon avec une carte</li><li>${plural(db.journal.length, "entrée au journal", "entrées au journal")}</li><li>Dernière modification : ${esc(last)}</li>`;
   $("#dtStore").hidden = storageOk;
+  $("#dtWelcome").hidden = !!(shinyUnion().size || db.cards.size || db.journal.length) || !!sync;
 }
 function initData() {
   views.data = { dirty: true, render: renderData };
@@ -1408,6 +1565,7 @@ function initData() {
       setDtMsg(report(applyData(n, mode), mode)); excluded.clear(); $("#dtCodeIn").value = "";
     } catch (_) { setDtMsg("Code invalide ou incomplet : copiez-le en entier depuis l’autre appareil.", true); }
   });
+  if (!SEED) $("#dtReset").hidden = true;
   $("#dtReset").addEventListener("click", () => {
     if (!confirm("Revenir aux données d’origine de vos tableurs ? Vos modifications seront perdues.")) return;
     seedDB(); excluded.clear(); touch(); setDtMsg("Données d’origine restaurées.");
@@ -1426,7 +1584,7 @@ function initData() {
    ============================================================ */
 function initApp() {
   loadDB();
-  initWheel(); initShiny(); initCards(); initData();
+  initWheel(); initShiny(); initCards(); initData(); initSync();
   $$("#tabs [data-tab]").forEach(b => b.addEventListener("click", () => show(b.dataset.tab)));
   window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (TABS.includes(h) && h !== activeView) show(h); });
   for (const k in views) views[k].dirty = true;
