@@ -97,7 +97,8 @@ h1, h2, h3, h4, p { margin: 0; }
 .bar { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 10px; }
 .bar > i { display: block; height: 100%; width: 0; background: var(--gold-bg); border-radius: 999px; transition: width .35s; }
 .bar.big { height: 14px; } .bar.big > i { background: var(--ok); }
-.spr { display: inline-block; flex: none; background-repeat: no-repeat; }
+.spr { display: inline-block; flex: none; background-repeat: no-repeat; background-image: url(sprites.webp); }
+.spr.sh { background-image: url(sprites-shiny.webp); }
 .badge { padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 800; }
 .chipst { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; background: var(--surface-2); color: var(--muted); }
 .chipst.ok { background: var(--ok-soft); color: var(--ok); } .chipst.miss { background: var(--miss-soft); color: var(--miss); } .chipst.gold { background: var(--gold-soft); color: var(--gold); }
@@ -275,6 +276,9 @@ details.sub { margin: 12px 0 0; } details.sub summary { padding: 4px 0; font-siz
 .field { display: flex; flex-direction: column; gap: 4px; font-weight: 700; font-size: .85rem; }
 #syRepo, #syToken { width: 100%; min-height: 40px; padding: 8px 12px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--text); }
 #syPanel details.howto { margin: 4px 0 8px; } #syPanel details.howto summary { cursor: pointer; color: var(--text); }
+
+button, summary, select { touch-action: manipulation; }
+#shList, #cdList { contain: layout style; }
 
 </style>
 </head>
@@ -523,11 +527,11 @@ const typeBadges = p => p.types.map(t => { const T = TYPES[t]; return `<span cla
 
 /* Vignettes : deux planches (normal / shiny), 32 colonnes de 72 px */
 const SPR_COLS = 32, SPR_PX = 72;
-function spr(id, size, shiny = false) {
+function spr(id, size) {   // position dans la planche ; l'image vient de la classe CSS (.spr / .spr.sh)
   const i = id - 1, x = (i % SPR_COLS) * size, y = Math.floor(i / SPR_COLS) * size;
-  return `width:${size}px;height:${size}px;background-image:url(${shiny ? "sprites-shiny.webp" : "sprites.webp"});background-size:${SPR_COLS * size}px auto;background-position:-${x}px -${y}px`;
+  return `width:${size}px;height:${size}px;background-size:${SPR_COLS * size}px auto;background-position:-${x}px -${y}px`;
 }
-const sprEl = (id, size, shiny = false) => `<span class="spr" style="${spr(id, size, shiny)}"></span>`;
+const sprEl = (id, size, shiny = false) => `<span class="spr${shiny ? " sh" : ""}" style="${spr(id, size)}"></span>`;
 const ART = (id, shiny) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${shiny ? "shiny/" : ""}${id}.png`;
 
 /* ---------- Jeux et versions ---------- */
@@ -663,17 +667,19 @@ function shinyUnion() {
 const shinyAny = id => shinyUnion().has(id);
 const hasCard = id => db.cards.has(id);
 const shinyVersionsOf = id => VERSIONS.filter(v => isShiny(v.id, id));
-function setShiny(v, id, on, skip) { const s = vSet(v); on ? s.add(id) : s.delete(id); touch(skip); }
-function setCard(id, on, skip) { on ? db.cards.add(id) : db.cards.delete(id); touch(skip); }
+function setShiny(v, id, on, skip) { const s = vSet(v); on ? s.add(id) : s.delete(id); touch(skip, false, "shiny"); }
+function setCard(id, on, skip) { on ? db.cards.add(id) : db.cards.delete(id); touch(skip, false, "cards"); }
 
 /* ---------- Vues, rendu différé, navigation ---------- */
 const views = {};
 let activeView = "wheel";
 let rafId = 0;
-function touch(skip, noSync) {
+/* Une modification ne rend « sale » que les vues qui en dépendent. */
+const DEPS = { shiny: ["wheel", "shiny", "data"], cards: ["wheel", "cards", "data"], journal: ["cards", "data"] };
+function touch(skip, noSync, what) {
   unionCache = null; db.updatedAt = Date.now(); saveSoon();
   if (!noSync) scheduleSync();
-  for (const k in views) if (k !== skip) views[k].dirty = true;
+  for (const k of (DEPS[what] || Object.keys(views))) if (k !== skip && views[k]) views[k].dirty = true;
   scheduleRender();
 }
 function scheduleRender() { if (rafId) return; rafId = requestAnimationFrame(() => { rafId = 0; renderActive(); renderHeader(); }); }
@@ -683,25 +689,27 @@ function renderHeader() {
   $("#pillCards").textContent = `${db.cards.size} / ${NMAX}`;
 }
 const TABS = ["wheel", "shiny", "cards", "data"];
+const scrollMem = {};
 function show(name) {
   if (!TABS.includes(name)) name = "wheel";
+  scrollMem[activeView] = window.scrollY;               // on retient où l'on en était
   activeView = name;
-  $$(".view").forEach(el => { el.hidden = el.id !== "v-" + name; });
+  $$(".view").forEach(el => { el.hidden = el.id !== "v-" + name; });   // les sections restent dans la page, seulement masquées
   $$("#tabs [data-tab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
   try { history.replaceState(null, "", "#" + name); } catch (_) {}
-  renderActive();
+  renderActive();                                       // ne fait rien si rien n'a changé
   if (views[name].onShow) views[name].onShow();
-  window.scrollTo(0, 0);
+  window.scrollTo(0, scrollMem[name] || 0);
 }
 
 /* ---------- Message temporaire avec annulation ---------- */
 let toastTimer = 0;
-function toast(msg, undo) {
+function toast(msg, undo, label = "Annuler") {
   const el = $("#toast");
   el.replaceChildren();
   const span = document.createElement("span"); span.textContent = msg; el.appendChild(span);
   if (undo) {
-    const b = document.createElement("button"); b.type = "button"; b.textContent = "Annuler";
+    const b = document.createElement("button"); b.type = "button"; b.textContent = label;
     b.addEventListener("click", () => { undo(); el.hidden = true; });
     el.appendChild(b);
   }
@@ -719,6 +727,10 @@ function downloadFile(name, text, type = "application/json") {
 }
 const fmtDate = iso => iso ? new Date(iso + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" }) : "";
 const sumCounts = c => Object.values(c).reduce((a, b) => a + b, 0);
+
+/* ---------- Travail en arrière-plan (sans bloquer l'écran) ---------- */
+const idle = cb => (window.requestIdleCallback ? requestIdleCallback(cb, { timeout: 250 }) : setTimeout(cb, 16));
+function preloadImg(url) { const im = new Image(); im.decoding = "async"; im.src = url; return im.decode ? im.decode().catch(() => {}) : Promise.resolve(); }
 
 /* ============================================================
    ROUE
@@ -794,14 +806,18 @@ const isObtainedHunt = id => { const v = huntV(); return !!v && isShiny(v.id, id
 /* ---------- Dessin de la roue ---------- */
 let wheelCx = 0;
 const off = document.createElement("canvas");
+let layoutKey = "", wheelSig = "";
+const poolSig = () => pool.reduce((h, p) => (h * 31 + p.id) % 1000003, pool.length);
 function layoutWheel() {
   const wrap = $("#wheelWrap"), canvas = $("#wheel");
   const css = Math.min(wrap.clientWidth, 620) || 360;
   const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+  if (layoutKey === css + ":" + dpr) return;            // même taille : la roue déjà dessinée est conservée
+  layoutKey = css + ":" + dpr;
   canvas.width = canvas.height = Math.round(css * dpr);
   off.width = off.height = canvas.width;
   wheelCx = canvas.width / 2;
-  buildWheel(); drawWheel();
+  buildWheel(); wheelSig = poolSig(); drawWheel();
 }
 function buildWheel() {
   if (!off.width) return;
@@ -880,13 +896,14 @@ function finish(p) {
   db.prefs.history.unshift({ id: p.id, name: p.name, color: primaryColor(p) });
   db.prefs.history = db.prefs.history.slice(0, 60); saveSoon(); renderHistory();
   if ($("#removeWinner").checked) { excluded.add(p.id); setTimeout(() => { if (!spinning) refreshPool(); }, 900); }
-  renderPoolList(); updateExcludedUi();
+  if ($("#listPanel").open) renderPoolList();
+  updateExcludedUi();
   if (views.wheel.dirty) scheduleRender();
 }
 
 /* ---------- Résultat ---------- */
 function artHTML(p) {
-  return `${sprEl(p.id, 150, artShiny)}<img src="${ART(p.id, artShiny)}" alt="Illustration de ${esc(p.name)}" loading="lazy" onerror="this.remove()">`;
+  return `${sprEl(p.id, 150, artShiny)}<img src="${ART(p.id, artShiny)}" alt="Illustration de ${esc(p.name)}" loading="lazy" decoding="async" fetchpriority="low" onerror="this.remove()">`;
 }
 function showResult(p) {
   lastRes = p; artShiny = false;
@@ -1090,8 +1107,10 @@ function refreshPool(rebuildList = true) {
   $("#spin").disabled = pool.length === 0 || spinning;
   if (!pool.length) $("#liveName").textContent = "\u00a0";
   syncFilterUi(); syncHunt(); updateExcludedUi();
-  if (rebuildList) renderPoolList();
-  buildWheel(); drawWheel(); updateLive();
+  if (rebuildList && $("#listPanel").open) renderPoolList();       // liste longue : seulement si le panneau est ouvert
+  const sig = poolSig();
+  if (sig !== wheelSig) { wheelSig = sig; buildWheel(); }              // roue inchangée : pas de redessin
+  drawWheel(); updateLive();
   if (lastRes) updateResultStatus();
 }
 
@@ -1103,6 +1122,7 @@ function initWheel() {
   $("#spin").addEventListener("click", spin);
   $("#resetFilters").addEventListener("click", () => { if (!spinning) resetFilters(); });
   $("#search").addEventListener("input", renderPoolList);
+  $("#listPanel").addEventListener("toggle", () => { if ($("#listPanel").open) renderPoolList(); });
   $("#resetExcluded").addEventListener("click", () => { if (!spinning) { excluded.clear(); refreshPool(); } });
   $("#clearHistory").addEventListener("click", () => { db.prefs.history = []; saveSoon(); renderHistory(); });
   $("#huntGame").addEventListener("change", e => { if (spinning) return; db.prefs.hunt = e.target.value; saveSoon(); refreshPool(); });
@@ -1176,6 +1196,27 @@ function renderShinyStats() {
     return `<button type="button" class="stat${SH.game === v.id ? " on" : ""}" data-v="${v.id}" title="Filtrer sur ${esc(v.label)}"><b>${n}</b><span>${esc(v.label)}</span><small>${v.noDex ? "hors Pokédex" : `sur ${dex}`}</small>${v.noDex ? "" : `<i style="width:${pct}%"></i>`}</button>`;
   }).join("");
 }
+let shKey = "", shToken = 0;
+function patchShiny() {                                  // met à jour les coches existantes sans rien reconstruire
+  for (const row of $("#shList").children) {
+    const id = +row.dataset.id; if (!id) continue;
+    row.querySelector(".spr").classList.toggle("sh", shinyAny(id));
+    for (const cell of row.querySelectorAll(".scell")) {
+      const on = isShiny(cell.dataset.v, id);
+      if (cell.classList.contains("on") !== on) { cell.classList.toggle("on", on); cell.setAttribute("aria-pressed", String(on)); }
+    }
+  }
+}
+function fillShinyRows(list, cols) {                     // 40 lignes tout de suite, le reste par petits paquets
+  const box = $("#shList"), token = ++shToken;
+  if (!list.length) { box.innerHTML = `<p class="empty">Aucun Pokémon ne correspond. Essayez d’élargir la recherche.</p>`; return; }
+  box.innerHTML = "";
+  let i = 0;
+  const step = n => { const end = Math.min(i + n, list.length); let s = ""; for (; i < end; i++) s += shRow(list[i], cols); box.insertAdjacentHTML("beforeend", s); };
+  step(40);
+  const loop = () => { if (token !== shToken) return; if (spinning) { idle(loop); return; } step(70); if (i < list.length) idle(loop); };
+  if (i < list.length) idle(loop);
+}
 function renderShiny() {
   const cols = shCols();
   const g = $("#shGame"), cur = SH.game;
@@ -1185,12 +1226,15 @@ function renderShiny() {
   $("#shGen").value = SH.gen; $("#shQ").value = SH.q;
   $$("#shStatus button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === SH.status)));
   renderShinyStats();
+  const key = JSON.stringify([SH.q, SH.gen, SH.status, SH.game, db.prefs.cols]);
   const list = POKEMON.filter(shPass);
   $("#shCount").textContent = plural(list.length, "Pokémon affiché", "Pokémon affichés");
+  if (key === shKey && SH.status === "all") { patchShiny(); return; }   // mêmes lignes : seules les coches changent
+  shKey = key;
   const style = `--n:${cols.length}`;
   $("#shHead").style.cssText = style; $("#shList").style.cssText = style;
   $("#shHead").innerHTML = `<span>N°</span><span></span><span>Pokémon</span>${cols.map(v => `<span class="hc" title="${esc(v.label)}">${esc(v.label)}</span>`).join("")}`;
-  $("#shList").innerHTML = list.length ? list.map(p => shRow(p, cols)).join("") : `<p class="empty">Aucun Pokémon ne correspond. Essayez d’élargir la recherche.</p>`;
+  fillShinyRows(list, cols);
 }
 
 function openColsDialog() {
@@ -1229,9 +1273,9 @@ function initShiny() {
     const row = cell.closest(".srow"), id = +row.dataset.id, vid = cell.dataset.v, on = !isShiny(vid, id), p = P(id), v = VBY[vid];
     setShiny(vid, id, on, "shiny");
     cell.classList.toggle("on", on); cell.setAttribute("aria-pressed", String(on));
-    row.querySelector(".spr").setAttribute("style", spr(id, 48, shinyAny(id)));
+    row.querySelector(".spr").classList.toggle("sh", shinyAny(id));
     renderShinyStats(); renderHeader();
-    if (!on) toast(`Shiny retiré : ${p.name} (${v.label})`, () => { setShiny(vid, id, true, "shiny"); cell.classList.add("on"); cell.setAttribute("aria-pressed", "true"); row.querySelector(".spr").setAttribute("style", spr(id, 48, true)); renderShinyStats(); renderHeader(); });
+    if (!on) toast(`Shiny retiré : ${p.name} (${v.label})`, () => { setShiny(vid, id, true, "shiny"); cell.classList.add("on"); cell.setAttribute("aria-pressed", "true"); row.querySelector(".spr").classList.add("sh"); renderShinyStats(); renderHeader(); });
   });
 }
 
@@ -1267,15 +1311,38 @@ function sectionHead(g) {
   const { tot, own } = genTotals(), o = own[g] || 0;
   return `Gen ${g} · ${GEN_NAMES[g]} <small>${o} / ${tot[g]}${o === tot[g] ? "" : `, ${plural(tot[g] - o, "manquante", "manquantes")}`}</small>`;
 }
+let cdKey = "", cdToken = 0;
+function patchCards() {
+  for (const t of $("#cdList").querySelectorAll(".tile")) {
+    const own = hasCard(+t.dataset.id);
+    if (t.classList.contains("own") !== own) { t.classList.toggle("own", own); t.classList.toggle("miss", !own); t.setAttribute("aria-pressed", String(own)); }
+  }
+  for (const h of $("#cdList").querySelectorAll(".gsec")) h.querySelector("h3").innerHTML = sectionHead(h.dataset.g);
+}
 function renderCardList() {
   const list = POKEMON.filter(cdPass);
   $("#cdCount").textContent = plural(list.length, "Pokémon affiché", "Pokémon affichés");
   $$("#cdStatus button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === CD.status)));
   $("#cdGen").value = CD.gen; $("#cdQ").value = CD.q;
-  if (!list.length) { $("#cdList").innerHTML = `<p class="empty">${CD.status === "missing" && !CD.q && CD.gen === "all" ? "Plus aucune carte manquante : la collection est complète !" : "Aucun Pokémon ne correspond."}</p>`; return; }
+  const box = $("#cdList"), key = JSON.stringify([CD.status, CD.gen, CD.q]);
+  if (!list.length) { cdKey = ""; ++cdToken; box.innerHTML = `<p class="empty">${CD.status === "missing" && !CD.q && CD.gen === "all" ? "Plus aucune carte manquante : la collection est complète !" : "Aucun Pokémon ne correspond."}</p>`; return; }
+  if (key === cdKey && CD.status === "all") { patchCards(); return; }   // mêmes tuiles : on met seulement les états à jour
+  cdKey = key;
   const by = {};
   for (const p of list) (by[p.gen] ||= []).push(p);
-  $("#cdList").innerHTML = Object.entries(by).map(([g, l]) => `<section class="gsec" data-g="${g}"><h3>${sectionHead(g)}</h3><div class="tiles">${l.map(tileHTML).join("")}</div></section>`).join("");
+  box.innerHTML = Object.keys(by).map(g => `<section class="gsec" data-g="${g}"><h3>${sectionHead(g)}</h3><div class="tiles"></div></section>`).join("");
+  const queue = Object.entries(by).map(([g, l]) => [box.querySelector(`.gsec[data-g="${g}"] .tiles`), l]);
+  const token = ++cdToken; let qi = 0, li = 0;
+  const step = n => {                                      // remplit les générations tuile par tuile, par paquets
+    while (n > 0 && qi < queue.length) {
+      const [el, l] = queue[qi], end = Math.min(li + n, l.length);
+      el.insertAdjacentHTML("beforeend", l.slice(li, end).map(tileHTML).join(""));
+      n -= end - li; li = end; if (li >= l.length) { qi++; li = 0; }
+    }
+  };
+  step(48);
+  const loop = () => { if (token !== cdToken) return; if (spinning) { idle(loop); return; } step(70); if (qi < queue.length) idle(loop); };
+  if (qi < queue.length) idle(loop);
 }
 
 /* ---------- Statistiques et journal ---------- */
@@ -1322,7 +1389,7 @@ function saveEntry() {
   const date = $("#jDate").value || null;
   if (jEdit) { const e = db.journal.find(x => x.uid === jEdit); if (e) Object.assign(e, { label, date, counts }); jEdit = null; toast("Entrée modifiée"); }
   else { db.journal.push({ uid: uid(), label, date, counts }); toast("Ajouté au journal"); }
-  touch("cards"); renderCardStats();
+  touch("cards", false, "journal"); renderCardStats();
 }
 
 function initCards() {
@@ -1361,7 +1428,7 @@ function initCards() {
     else if (b.dataset.edit) { jEdit = b.dataset.edit; renderCardStats(); $("#jForm").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" }); }
     else if (b.dataset.del) {
       const i = db.journal.findIndex(x => x.uid === b.dataset.del), removed = db.journal[i];
-      if (i >= 0 && confirm(`Supprimer « ${removed.label} » du journal ?`)) { db.journal.splice(i, 1); touch("cards"); renderCardStats(); toast("Entrée supprimée", () => { db.journal.splice(i, 0, removed); touch("cards"); renderCardStats(); }); }
+      if (i >= 0 && confirm(`Supprimer « ${removed.label} » du journal ?`)) { db.journal.splice(i, 1); touch("cards", false, "journal"); renderCardStats(); toast("Entrée supprimée", () => { db.journal.splice(i, 0, removed); touch("cards", false, "journal"); renderCardStats(); }); }
     }
   });
 }
@@ -1582,6 +1649,10 @@ function initData() {
 /* ============================================================
    DÉMARRAGE
    ============================================================ */
+function prewarm() {
+  for (const k of ["shiny", "cards"]) if (views[k].dirty && k !== activeView) { views[k].dirty = false; views[k].render(); }
+  idle(() => preloadImg("sprites-shiny.webp"));
+}
 function initApp() {
   loadDB();
   initWheel(); initShiny(); initCards(); initData(); initSync();
@@ -1592,7 +1663,14 @@ function initApp() {
   const h = location.hash.slice(1);
   show(TABS.includes(h) ? h : "wheel");
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
-  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+    navigator.serviceWorker.register("sw.js").then(reg => reg.addEventListener("updatefound", () => {
+      const nw = reg.installing;
+      if (nw) nw.addEventListener("statechange", () => { if (nw.state === "installed" && navigator.serviceWorker.controller) toast("Une nouvelle version est prête.", () => location.reload(), "Recharger"); });
+    })).catch(() => {});
+  }
+  // Une fois l'écran affiché : on prépare en douce les autres sections et les planches d'images
+  idle(() => { preloadImg("sprites.webp"); setTimeout(prewarm, 500); });
 }
 initApp();
 
