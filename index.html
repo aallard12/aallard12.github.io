@@ -97,8 +97,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .bar { height: 10px; border-radius: 999px; background: var(--surface-2); overflow: hidden; margin-top: 10px; }
 .bar > i { display: block; height: 100%; width: 0; background: var(--gold-bg); border-radius: 999px; transition: width .35s; }
 .bar.big { height: 14px; } .bar.big > i { background: var(--ok); }
-.spr { display: inline-block; flex: none; background-repeat: no-repeat; background-image: url(sprites.webp); }
-.spr.sh { background-image: url(sprites-shiny.webp); }
+.spr { display: inline-block; flex: none; background-repeat: no-repeat; }
 .badge { padding: 3px 11px; border-radius: 999px; font-size: .82rem; font-weight: 800; }
 .chipst { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; background: var(--surface-2); color: var(--muted); }
 .chipst.ok { background: var(--ok-soft); color: var(--ok); } .chipst.miss { background: var(--miss-soft); color: var(--miss); } .chipst.gold { background: var(--gold-soft); color: var(--gold); }
@@ -201,7 +200,7 @@ details.sub { margin: 12px 0 0; } details.sub summary { padding: 4px 0; font-siz
 .shead, .srow { display: grid; grid-template-columns: 44px 52px minmax(130px, 1fr) repeat(var(--n, 6), 92px); align-items: center; gap: 8px; }
 .shead { position: sticky; top: calc(var(--top-h) + env(safe-area-inset-top)); z-index: 5; background: var(--bg); padding: 8px 10px; font-size: .76rem; font-weight: 800; color: var(--muted); border-bottom: 2px solid var(--border); }
 .shead .hc { text-align: center; line-height: 1.15; }
-.srow { padding: 4px 10px; border-bottom: 1px solid var(--border); content-visibility: auto; contain-intrinsic-size: auto 58px; }
+.srow { padding: 4px 10px; border-bottom: 1px solid var(--border); }
 .srow:hover { background: var(--surface); }
 .sn { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; font-size: .85rem; }
 .sname { font-weight: 800; min-width: 0; } .sname small { display: block; color: var(--muted); font-weight: 600; font-size: .76rem; }
@@ -229,7 +228,7 @@ details.sub { margin: 12px 0 0; } details.sub summary { padding: 4px 0; font-siz
 .gsec { margin-top: 22px; }
 .gsec h3 { font-size: 1.1rem; margin-bottom: 10px; } .gsec h3 small { color: var(--muted); font-weight: 700; font-size: .85rem; margin-left: 6px; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; }
-.tile { position: relative; aspect-ratio: 5 / 6.6; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; padding: 6px 4px 8px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); transition: transform .12s, opacity .2s; content-visibility: auto; contain-intrinsic-size: auto 126px; }
+.tile { position: relative; aspect-ratio: 5 / 6.6; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; padding: 6px 4px 8px; border-radius: 12px; border: 2px solid var(--border); background: var(--surface); transition: transform .12s, opacity .2s; }
 .tile .tn { position: absolute; top: 6px; left: 8px; font-size: .72rem; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
 .tile .spr { margin-bottom: auto; margin-top: 10px; }
 .tile .tname { font-size: .78rem; font-weight: 800; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -278,7 +277,18 @@ details.sub { margin: 12px 0 0; } details.sub summary { padding: 4px 0; font-siz
 #syPanel details.howto { margin: 4px 0 8px; } #syPanel details.howto summary { cursor: pointer; color: var(--text); }
 
 button, summary, select { touch-action: manipulation; }
-#shList, #cdList { contain: layout style; }
+
+/* listes virtuelles */
+.vbox { position: relative; }
+.vwin { position: absolute; left: 0; right: 0; top: 0; }
+.srow { height: var(--rowh, auto); box-sizing: border-box; }
+.sname, .sname small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vhead { height: 48px; margin: 0; display: flex; align-items: flex-end; padding-bottom: 10px; font-size: 1.1rem; }
+.vhead small { color: var(--muted); font-weight: 700; font-size: .85rem; margin-left: 6px; }
+.trow { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 10px; height: var(--rh); align-content: start; }
+.trow .tile { height: var(--th); aspect-ratio: auto; }
+
+.vbox, .vwin { overflow-anchor: none; }
 
 </style>
 </head>
@@ -526,12 +536,15 @@ const textOn = hex => (luminance(hex) > 0.35 ? "#1b1b26" : "#ffffff");
 const typeBadges = p => p.types.map(t => { const T = TYPES[t]; return `<span class="badge" style="background:${T.color};color:${textOn(T.color)}">${T.fr}</span>`; }).join("");
 
 /* Vignettes : deux planches (normal / shiny), 32 colonnes de 72 px */
-const SPR_COLS = 32, SPR_PX = 72;
-function spr(id, size) {   // position dans la planche ; l'image vient de la classe CSS (.spr / .spr.sh)
-  const i = id - 1, x = (i % SPR_COLS) * size, y = Math.floor(i / SPR_COLS) * size;
-  return `width:${size}px;height:${size}px;background-size:${SPR_COLS * size}px auto;background-position:-${x}px -${y}px`;
+/* Vignettes : 34 petits fichiers (64 Pokémon chacun, 8 x 8 cases de 72 px) chargés seulement quand on en a besoin */
+const SPR_CH = 64, SPR_COLS = 8;
+const sprUrl = (id, shiny) => `sp/${shiny ? "s" : "n"}${Math.floor((id - 1) / SPR_CH)}.webp`;
+function spr(id, size, shiny = false) {
+  const i = (id - 1) % SPR_CH, x = (i % SPR_COLS) * size, y = Math.floor(i / SPR_COLS) * size;
+  return `width:${size}px;height:${size}px;background-image:url(${sprUrl(id, shiny)});background-size:${SPR_COLS * size}px auto;background-position:-${x}px -${y}px`;
 }
-const sprEl = (id, size, shiny = false) => `<span class="spr${shiny ? " sh" : ""}" style="${spr(id, size)}"></span>`;
+const sprEl = (id, size, shiny = false) => `<span class="spr" style="${spr(id, size, shiny)}"></span>`;
+const setSprShiny = (el, id, on) => { el.style.backgroundImage = `url(${sprUrl(id, on)})`; };
 const ART = (id, shiny) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${shiny ? "shiny/" : ""}${id}.png`;
 
 /* ---------- Jeux et versions ---------- */
@@ -698,8 +711,8 @@ function show(name) {
   $$("#tabs [data-tab]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
   try { history.replaceState(null, "", "#" + name); } catch (_) {}
   renderActive();                                       // ne fait rien si rien n'a changé
-  if (views[name].onShow) views[name].onShow();
   window.scrollTo(0, scrollMem[name] || 0);
+  if (views[name].onShow) views[name].onShow();
 }
 
 /* ---------- Message temporaire avec annulation ---------- */
@@ -731,6 +744,36 @@ const sumCounts = c => Object.values(c).reduce((a, b) => a + b, 0);
 /* ---------- Travail en arrière-plan (sans bloquer l'écran) ---------- */
 const idle = cb => (window.requestIdleCallback ? requestIdleCallback(cb, { timeout: 250 }) : setTimeout(cb, 16));
 function preloadImg(url) { const im = new Image(); im.decoding = "async"; im.src = url; return im.decode ? im.decode().catch(() => {}) : Promise.resolve(); }
+
+/* ---------- Liste virtuelle : seules les lignes visibles existent dans la page ---------- */
+const VLISTS = new Set();
+function lastAtOrBefore(off, y) { let lo = 0, hi = off.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (off[m] <= y) lo = m; else hi = m - 1; } return lo; }
+function makeVList(box) {
+  const win = document.createElement("div"); win.className = "vwin";
+  box.classList.add("vbox"); box.replaceChildren(win);
+  const vl = {
+    n: 0, off: new Float64Array(1), htmlAt: () => "", a: -1, b: -1, win,
+    set(n, heightAt, htmlAt) {
+      vl.n = n; vl.htmlAt = htmlAt; vl.off = new Float64Array(n + 1);
+      for (let i = 0; i < n; i++) vl.off[i + 1] = vl.off[i] + heightAt(i);
+      box.style.height = vl.off[n] + "px"; vl.update(true);
+    },
+    update(force) {
+      if (!vl.n || box.closest("[hidden]")) return;
+      const top = box.getBoundingClientRect().top, over = 450;
+      const y0 = Math.max(0, -top - over), y1 = Math.min(vl.off[vl.n], -top + window.innerHeight + over);
+      const a = lastAtOrBefore(vl.off, y0), b = Math.min(vl.n, lastAtOrBefore(vl.off, y1) + 1);
+      if (!force && a === vl.a && b === vl.b) return;
+      vl.a = a; vl.b = b;
+      let s = ""; for (let i = a; i < b; i++) s += vl.htmlAt(i);
+      win.style.transform = `translateY(${vl.off[a]}px)`; win.innerHTML = s;
+    },
+  };
+  VLISTS.add(vl); return vl;
+}
+let vRaf = 0;
+const vTick = () => { if (!vRaf) vRaf = requestAnimationFrame(() => { vRaf = 0; VLISTS.forEach(v => v.update()); }); };
+addEventListener("scroll", vTick, { passive: true });
 
 /* ============================================================
    ROUE
@@ -1196,45 +1239,33 @@ function renderShinyStats() {
     return `<button type="button" class="stat${SH.game === v.id ? " on" : ""}" data-v="${v.id}" title="Filtrer sur ${esc(v.label)}"><b>${n}</b><span>${esc(v.label)}</span><small>${v.noDex ? "hors Pokédex" : `sur ${dex}`}</small>${v.noDex ? "" : `<i style="width:${pct}%"></i>`}</button>`;
   }).join("");
 }
-let shKey = "", shToken = 0;
-function patchShiny() {                                  // met à jour les coches existantes sans rien reconstruire
-  for (const row of $("#shList").children) {
-    const id = +row.dataset.id; if (!id) continue;
-    row.querySelector(".spr").classList.toggle("sh", shinyAny(id));
-    for (const cell of row.querySelectorAll(".scell")) {
-      const on = isShiny(cell.dataset.v, id);
-      if (cell.classList.contains("on") !== on) { cell.classList.toggle("on", on); cell.setAttribute("aria-pressed", String(on)); }
-    }
-  }
+
+let shVL = null, shLayoutKey = "", shW = 0;
+function shMeasure(cols, list) {                         // hauteur réelle d'une ligne (toutes sont identiques)
+  const box = $("#shList"), key = `${window.innerWidth <= 720}:${cols.length}:${box.clientWidth}`;
+  if (key === shLayoutKey) return;
+  shLayoutKey = key; shW = box.clientWidth; box.style.removeProperty("--rowh");
+  shVL.win.innerHTML = shRow(list[0], cols);
+  const h = shVL.win.firstElementChild.getBoundingClientRect().height;
+  box.style.setProperty("--rowh", Math.max(48, Math.ceil(h)) + "px");
 }
-function fillShinyRows(list, cols) {                     // 40 lignes tout de suite, le reste par petits paquets
-  const box = $("#shList"), token = ++shToken;
-  if (!list.length) { box.innerHTML = `<p class="empty">Aucun Pokémon ne correspond. Essayez d’élargir la recherche.</p>`; return; }
-  box.innerHTML = "";
-  let i = 0;
-  const step = n => { const end = Math.min(i + n, list.length); let s = ""; for (; i < end; i++) s += shRow(list[i], cols); box.insertAdjacentHTML("beforeend", s); };
-  step(40);
-  const loop = () => { if (token !== shToken) return; if (spinning) { idle(loop); return; } step(70); if (i < list.length) idle(loop); };
-  if (i < list.length) idle(loop);
+function shRelist() {
+  const cols = shCols(), list = POKEMON.filter(shPass), box = $("#shList");
+  $("#shCount").textContent = plural(list.length, "Pokémon affiché", "Pokémon affichés");
+  $("#shHead").style.cssText = `--n:${cols.length}`; box.style.setProperty("--n", cols.length);
+  $("#shHead").innerHTML = `<span>N°</span><span></span><span>Pokémon</span>${cols.map(v => `<span class="hc" title="${esc(v.label)}">${esc(v.label)}</span>`).join("")}`;
+  if (!list.length) { shVL.set(1, () => 110, () => `<p class="empty">Aucun Pokémon ne correspond. Essayez d’élargir la recherche.</p>`); return; }
+  shMeasure(cols, list);
+  const H = parseFloat(box.style.getPropertyValue("--rowh")) || 60;
+  shVL.set(list.length, () => H, i => shRow(list[i], cols));
 }
 function renderShiny() {
-  const cols = shCols();
-  const g = $("#shGame"), cur = SH.game;
+  const cols = shCols(), g = $("#shGame"), cur = SH.game;
   g.innerHTML = `<option value="all">Tous les jeux suivis</option>` + cols.map(v => `<option value="${v.id}">${esc(v.label)}</option>`).join("");
   if (cur !== "all" && !cols.some(v => v.id === cur)) SH.game = "all";
-  g.value = SH.game;
-  $("#shGen").value = SH.gen; $("#shQ").value = SH.q;
+  g.value = SH.game; $("#shGen").value = SH.gen; $("#shQ").value = SH.q;
   $$("#shStatus button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === SH.status)));
-  renderShinyStats();
-  const key = JSON.stringify([SH.q, SH.gen, SH.status, SH.game, db.prefs.cols]);
-  const list = POKEMON.filter(shPass);
-  $("#shCount").textContent = plural(list.length, "Pokémon affiché", "Pokémon affichés");
-  if (key === shKey && SH.status === "all") { patchShiny(); return; }   // mêmes lignes : seules les coches changent
-  shKey = key;
-  const style = `--n:${cols.length}`;
-  $("#shHead").style.cssText = style; $("#shList").style.cssText = style;
-  $("#shHead").innerHTML = `<span>N°</span><span></span><span>Pokémon</span>${cols.map(v => `<span class="hc" title="${esc(v.label)}">${esc(v.label)}</span>`).join("")}`;
-  fillShinyRows(list, cols);
+  renderShinyStats(); shRelist();
 }
 
 function openColsDialog() {
@@ -1253,11 +1284,12 @@ function applyCols() {
 }
 
 function initShiny() {
-  views.shiny = { dirty: true, render: renderShiny };
+  shVL = makeVList($("#shList"));
+  views.shiny = { dirty: true, render: renderShiny, onShow: () => { if ($("#shList").clientWidth !== shW) shRelist(); else shVL.update(); } };
   $("#shGen").innerHTML = `<option value="all">Toutes les générations</option>` + Object.entries(GEN_NAMES).map(([g, n]) => `<option value="${g}">Gen ${g} · ${n}</option>`).join("");
-  let t; $("#shQ").addEventListener("input", e => { SH.q = e.target.value; clearTimeout(t); t = setTimeout(renderShiny, 140); });
-  $("#shGen").addEventListener("change", e => { SH.gen = e.target.value; renderShiny(); });
-  $("#shGame").addEventListener("change", e => { SH.game = e.target.value; renderShiny(); });
+  let t; $("#shQ").addEventListener("input", e => { SH.q = e.target.value; clearTimeout(t); t = setTimeout(shRelist, 140); });
+  $("#shGen").addEventListener("change", e => { SH.gen = e.target.value; shRelist(); });
+  $("#shGame").addEventListener("change", e => { SH.game = e.target.value; shRelist(); });
   $("#shStatus").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { SH.status = b.dataset.s; renderShiny(); } });
   $("#shStats").addEventListener("click", e => {
     const b = e.target.closest(".stat"); if (!b) return;
@@ -1268,14 +1300,15 @@ function initShiny() {
   $("#shCols").addEventListener("click", openColsDialog);
   $("#colsApply").addEventListener("click", applyCols);
   $("#colsCancel").addEventListener("click", () => { const d = $("#colsDlg"); d.close ? d.close() : d.removeAttribute("open"); });
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (activeView === "shiny") shRelist(); }, 150); });
   $("#shList").addEventListener("click", e => {
     const cell = e.target.closest(".scell"); if (!cell) return;
     const row = cell.closest(".srow"), id = +row.dataset.id, vid = cell.dataset.v, on = !isShiny(vid, id), p = P(id), v = VBY[vid];
     setShiny(vid, id, on, "shiny");
     cell.classList.toggle("on", on); cell.setAttribute("aria-pressed", String(on));
-    row.querySelector(".spr").classList.toggle("sh", shinyAny(id));
+    setSprShiny(row.querySelector(".spr"), id, shinyAny(id));
     renderShinyStats(); renderHeader();
-    if (!on) toast(`Shiny retiré : ${p.name} (${v.label})`, () => { setShiny(vid, id, true, "shiny"); cell.classList.add("on"); cell.setAttribute("aria-pressed", "true"); row.querySelector(".spr").classList.add("sh"); renderShinyStats(); renderHeader(); });
+    if (!on) toast(`Shiny retiré : ${p.name} (${v.label})`, () => { setShiny(vid, id, true, "shiny"); shVL.update(true); renderShinyStats(); renderHeader(); });
   });
 }
 
@@ -1306,44 +1339,30 @@ function cdPass(p) {
   const own = hasCard(p.id);
   return CD.status === "all" || (CD.status === "own" ? own : !own);
 }
-const tileHTML = p => { const own = hasCard(p.id); return `<button type="button" class="tile ${own ? "own" : "miss"}" data-id="${p.id}" aria-pressed="${own}" aria-label="${esc(p.name)}, ${own ? "carte possédée" : "carte manquante"}"><span class="tn">${p.id}</span>${sprEl(p.id, 60)}<span class="tname">${esc(p.name)}</span></button>`; };
-function sectionHead(g) {
-  const { tot, own } = genTotals(), o = own[g] || 0;
-  return `Gen ${g} · ${GEN_NAMES[g]} <small>${o} / ${tot[g]}${o === tot[g] ? "" : `, ${plural(tot[g] - o, "manquante", "manquantes")}`}</small>`;
+const tileHTML = p => { const own = hasCard(p.id); return `<button type="button" class="tile ${own ? "own" : "miss"}" data-id="${p.id}" aria-pressed="${own}" aria-label="${esc(p.name)}, ${own ? "carte possédée" : "carte manquante"}"><span class="tn">${p.id}</span>${sprEl(p.id, 56)}<span class="tname">${esc(p.name)}</span></button>`; };
+function sectionHead(g, gt = genTotals()) {
+  const o = gt.own[g] || 0, t = gt.tot[g];
+  return `Gen ${g} · ${GEN_NAMES[g]} <small>${o} / ${t}${o === t ? "" : `, ${plural(t - o, "manquante", "manquantes")}`}</small>`;
 }
-let cdKey = "", cdToken = 0;
-function patchCards() {
-  for (const t of $("#cdList").querySelectorAll(".tile")) {
-    const own = hasCard(+t.dataset.id);
-    if (t.classList.contains("own") !== own) { t.classList.toggle("own", own); t.classList.toggle("miss", !own); t.setAttribute("aria-pressed", String(own)); }
-  }
-  for (const h of $("#cdList").querySelectorAll(".gsec")) h.querySelector("h3").innerHTML = sectionHead(h.dataset.g);
-}
-function renderCardList() {
-  const list = POKEMON.filter(cdPass);
+let cdVL = null, cdW = 0;
+const CD_GAP = 10, CD_HEAD = 48;
+function cdRelist() {
+  const list = POKEMON.filter(cdPass), box = $("#cdList");
   $("#cdCount").textContent = plural(list.length, "Pokémon affiché", "Pokémon affichés");
   $$("#cdStatus button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.s === CD.status)));
-  $("#cdGen").value = CD.gen; $("#cdQ").value = CD.q;
-  const box = $("#cdList"), key = JSON.stringify([CD.status, CD.gen, CD.q]);
-  if (!list.length) { cdKey = ""; ++cdToken; box.innerHTML = `<p class="empty">${CD.status === "missing" && !CD.q && CD.gen === "all" ? "Plus aucune carte manquante : la collection est complète !" : "Aucun Pokémon ne correspond."}</p>`; return; }
-  if (key === cdKey && CD.status === "all") { patchCards(); return; }   // mêmes tuiles : on met seulement les états à jour
-  cdKey = key;
-  const by = {};
+  $("#cdGen").value = CD.gen; if ($("#cdQ").value !== CD.q) $("#cdQ").value = CD.q;
+  if (!list.length) { cdVL.set(1, () => 120, () => `<p class="empty">${CD.status === "missing" && !CD.q && CD.gen === "all" ? "Plus aucune carte manquante : la collection est complète !" : "Aucun Pokémon ne correspond."}</p>`); return; }
+  const W = cdW = box.clientWidth || 340;
+  const cols = Math.max(3, Math.floor((W + CD_GAP) / (96 + CD_GAP)));
+  const tw = (W - (cols - 1) * CD_GAP) / cols, th = Math.round(tw * 1.32), rh = th + CD_GAP;
+  box.style.setProperty("--cols", cols); box.style.setProperty("--th", th + "px"); box.style.setProperty("--rh", rh + "px");
+  const gt = genTotals(), rows = [], by = {};
   for (const p of list) (by[p.gen] ||= []).push(p);
-  box.innerHTML = Object.keys(by).map(g => `<section class="gsec" data-g="${g}"><h3>${sectionHead(g)}</h3><div class="tiles"></div></section>`).join("");
-  const queue = Object.entries(by).map(([g, l]) => [box.querySelector(`.gsec[data-g="${g}"] .tiles`), l]);
-  const token = ++cdToken; let qi = 0, li = 0;
-  const step = n => {                                      // remplit les générations tuile par tuile, par paquets
-    while (n > 0 && qi < queue.length) {
-      const [el, l] = queue[qi], end = Math.min(li + n, l.length);
-      el.insertAdjacentHTML("beforeend", l.slice(li, end).map(tileHTML).join(""));
-      n -= end - li; li = end; if (li >= l.length) { qi++; li = 0; }
-    }
-  };
-  step(48);
-  const loop = () => { if (token !== cdToken) return; if (spinning) { idle(loop); return; } step(70); if (qi < queue.length) idle(loop); };
-  if (qi < queue.length) idle(loop);
+  for (const [g, l] of Object.entries(by)) { rows.push({ g }); for (let k = 0; k < l.length; k += cols) rows.push({ t: l.slice(k, k + cols) }); }
+  cdVL.set(rows.length, k => (rows[k].g ? CD_HEAD : rh),
+    k => (rows[k].g ? `<h3 class="vhead">${sectionHead(rows[k].g, gt)}</h3>` : `<div class="trow">${rows[k].t.map(tileHTML).join("")}</div>`));
 }
+const renderCardList = cdRelist;
 
 /* ---------- Statistiques et journal ---------- */
 function catTotals() { const t = {}; for (const e of db.journal) for (const [c, n] of Object.entries(e.counts)) t[c] = (t[c] || 0) + n; return t; }
@@ -1393,7 +1412,10 @@ function saveEntry() {
 }
 
 function initCards() {
-  views.cards = { dirty: true, render: () => { renderCardsHead(); CD.tab === "list" ? renderCardList() : renderCardStats(); } };
+  cdVL = makeVList($("#cdList"));
+  views.cards = { dirty: true, render: () => { renderCardsHead(); CD.tab === "list" ? renderCardList() : renderCardStats(); },
+    onShow: () => { if (CD.tab === "list") { if ($("#cdList").clientWidth !== cdW) cdRelist(); else cdVL.update(); } } };
+  let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (activeView === "cards" && CD.tab === "list") cdRelist(); }, 150); });
   $("#cdGen").innerHTML = `<option value="all">Toutes les générations</option>` + Object.entries(GEN_NAMES).map(([g, n]) => `<option value="${g}">Gen ${g} · ${n}</option>`).join("");
   const setTab = t => {
     CD.tab = t;
@@ -1413,13 +1435,8 @@ function initCards() {
   $("#cdList").addEventListener("click", e => {
     const tile = e.target.closest(".tile"); if (!tile) return;
     const id = +tile.dataset.id, p = P(id), on = !hasCard(id);
-    setCard(id, on, "cards");
-    tile.classList.toggle("own", on); tile.classList.toggle("miss", !on); tile.setAttribute("aria-pressed", String(on));
-    renderCardsHead();
-    const sec = tile.closest(".gsec");
-    if (!cdPass(p)) { tile.classList.add("gone"); setTimeout(() => { tile.remove(); if (sec && !sec.querySelector(".tile")) sec.remove(); else if (sec) sec.querySelector("h3").innerHTML = sectionHead(sec.dataset.g); }, 220); }
-    else if (sec) sec.querySelector("h3").innerHTML = sectionHead(sec.dataset.g);
-    toast(on ? `Carte de ${p.name} ajoutée` : `Carte de ${p.name} retirée`, () => { setCard(id, !on, "cards"); renderCardsHead(); renderCardList(); });
+    setCard(id, on, "cards"); renderCardsHead(); cdRelist();
+    toast(on ? `Carte de ${p.name} ajoutée` : `Carte de ${p.name} retirée`, () => { setCard(id, !on, "cards"); renderCardsHead(); cdRelist(); });
   });
   $("#cdStats").addEventListener("click", e => {
     const b = e.target.closest("button"); if (!b) return;
@@ -1649,10 +1666,6 @@ function initData() {
 /* ============================================================
    DÉMARRAGE
    ============================================================ */
-function prewarm() {
-  for (const k of ["shiny", "cards"]) if (views[k].dirty && k !== activeView) { views[k].dirty = false; views[k].render(); }
-  idle(() => preloadImg("sprites-shiny.webp"));
-}
 function initApp() {
   loadDB();
   initWheel(); initShiny(); initCards(); initData(); initSync();
@@ -1669,8 +1682,6 @@ function initApp() {
       if (nw) nw.addEventListener("statechange", () => { if (nw.state === "installed" && navigator.serviceWorker.controller) toast("Une nouvelle version est prête.", () => location.reload(), "Recharger"); });
     })).catch(() => {});
   }
-  // Une fois l'écran affiché : on prépare en douce les autres sections et les planches d'images
-  idle(() => { preloadImg("sprites.webp"); setTimeout(prewarm, 500); });
 }
 initApp();
 
