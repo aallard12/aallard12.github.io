@@ -1,5 +1,5 @@
 /* Pokéhub : fonctionne hors-ligne. Changez VERSION à chaque mise à jour de l'application. */
-const VERSION = "pokehub-v4";
+const VERSION = "pokehub-v5";
 const ART = "pokehub-art";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 const SPRITES = Array.from({ length: 17 }, (_, k) => ["n", "s"].map(t => `./sp/${t}${k}.webp`)).flat();

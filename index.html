@@ -290,6 +290,35 @@ button, summary, select { touch-action: manipulation; }
 
 .vbox, .vwin { overflow-anchor: none; }
 
+
+/* ---------- Succès ---------- */
+.tabs button { position: relative; }
+.tab-dot { position: absolute; top: 3px; right: 6px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: var(--accent); color: #fff; font-size: .7rem; font-weight: 800; font-style: normal; display: grid; place-items: center; }
+@media (max-width: 720px) { .tab-dot { top: 2px; right: calc(50% - 26px); } }
+#v-achv .bar.big > i { background: var(--gold-bg); }
+.achsec { margin-top: 18px; }
+.achsec > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; padding: 6px 2px; }
+.achsec > summary::-webkit-details-marker { display: none; } .achsec > summary::after { content: "+"; margin-left: auto; color: var(--muted); font-size: 1.4rem; } .achsec[open] > summary::after { content: "−"; }
+.achsec > summary span { color: var(--muted); font-size: .85rem; font-weight: 700; }
+.achgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 10px; margin-top: 6px; }
+.ach { background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; }
+.ach.done { border-color: var(--gold-bg); box-shadow: 0 0 0 1.5px var(--gold-bg); }
+.ach > summary, .ach.secret { display: flex; align-items: center; gap: 12px; padding: 12px; list-style: none; cursor: pointer; }
+.ach > summary::-webkit-details-marker { display: none; } .ach.secret { cursor: default; }
+.ach-body { flex: 1; min-width: 0; } .ach-body h4 { font-size: 1rem; } .ach-body p { color: var(--muted); font-size: .85rem; } .ach-body small { color: var(--muted); font-size: .78rem; }
+.ach-body .bar { margin-top: 6px; height: 7px; } .cryptic { font-style: italic; }
+.medal { width: 46px; height: 46px; flex: none; color: var(--muted); }
+.medal .rib { fill: var(--border); } .medal .disc { fill: var(--surface-2); stroke: var(--border); stroke-width: 1.5; } .medal .star { fill: var(--border); }
+.ach.m1 .disc { fill: #cd7f32; stroke: #a5622a; } .ach.m1 .rib { fill: #a5622a; }
+.ach.m2 .disc { fill: #c3cad6; stroke: #8f99a9; } .ach.m2 .rib { fill: #8f99a9; }
+.ach.m3 .disc { fill: #ffc531; stroke: #d99a00; } .ach.m3 .rib { fill: #d99a00; }
+.ach:not(.m0) .star { fill: #fff; } .ach.m3 .star { fill: #7a5200; }
+.ach.secret.found .disc { fill: #7c5cff; stroke: #5b3fd9; } .ach.secret.found .star { fill: #fff; }
+.ach-tiers { display: flex; gap: 4px; flex: none; }
+.td { width: 11px; height: 11px; border-radius: 50%; background: var(--surface-2); border: 1.5px solid var(--border); }
+.td.on.d1 { background: #cd7f32; border-color: #a5622a; } .td.on.d2 { background: #c3cad6; border-color: #8f99a9; } .td.on.d3 { background: #ffc531; border-color: #d99a00; }
+.ach-lines { list-style: none; margin: 0; padding: 0 12px 12px; display: grid; gap: 6px; font-size: .85rem; }
+.ach-lines li { display: grid; grid-template-columns: 64px 1fr auto; gap: 8px; opacity: .55; } .ach-lines li.on { opacity: 1; } .ach-lines em { color: var(--muted); font-style: normal; }
 </style>
 </head>
 <body>
@@ -300,6 +329,7 @@ button, summary, select { touch-action: manipulation; }
     <button type="button" role="tab" data-tab="wheel" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 3v7M12 14v7M3 12h7M14 12h7"/></svg><span>Roue</span></button>
     <button type="button" role="tab" data-tab="shiny" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.2 6.3L21 12l-6.8 2.7L12 21l-2.2-6.3L3 12l6.8-2.7z"/></svg><span>Shiny</span></button>
     <button type="button" role="tab" data-tab="cards" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="11" height="16" rx="2"/><path d="M19 7v12a2 2 0 0 1-2 2H9"/></svg><span>Cartes</span></button>
+    <button type="button" role="tab" data-tab="achv" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7"/></svg><span>Succès</span><i class="tab-dot" id="achvDot" hidden></i></button>
     <button type="button" role="tab" data-tab="data" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg><span>Données</span></button>
   </nav>
   <div class="pills" aria-live="polite">
@@ -394,6 +424,16 @@ button, summary, select { touch-action: manipulation; }
     <div id="cdList"></div>
   </div>
   <div id="cdStats" hidden></div>
+</section>
+
+<!-- ================= SUCCÈS ================= -->
+<section class="view" id="v-achv" hidden>
+  <div class="view-head">
+    <div class="bignum"><strong id="avCount">0</strong><span id="avSub"></span></div>
+    <div class="seg" id="avFilter" role="group" aria-label="Filtrer les succès"><button type="button" data-f="all" aria-pressed="true">Tous</button><button type="button" data-f="doing" aria-pressed="false">En cours</button><button type="button" data-f="done" aria-pressed="false">Obtenus</button></div>
+  </div>
+  <div class="bar big"><i id="avBar"></i></div>
+  <div id="avBody"></div>
 </section>
 
 <!-- ================= DONNÉES ================= -->
@@ -588,12 +628,12 @@ const CAT_IDS = new Set(CATS.map(c => c.id));
 
 /* ---------- Base locale ---------- */
 const DB_KEY = "pokehub:v1";
-const db = { shiny: {}, cards: new Set(), journal: [], prefs: {}, updatedAt: 0 };
+const db = { shiny: {}, cards: new Set(), journal: [], achv: {}, prefs: {}, updatedAt: 0 };
 let storageOk = true;
 const defaultPrefs = () => ({ hunt: "", hide: true, cols: [...DEFAULT_COLS], filters: { sel: {}, modes: {} }, history: [] });
 
 function seedDB() {
-  db.shiny = {}; db.journal = [];
+  db.shiny = {}; db.journal = []; db.achv = {};
   if (!SEED) { db.cards = new Set(); return; }          // version publique : démarre vide
   for (const [v, r] of Object.entries(SEED.shiny)) db.shiny[v] = parseRanges(r);
   const missing = parseRanges(SEED.missing);
@@ -605,9 +645,21 @@ function cleanEntry(e) {
   for (const [k, v] of Object.entries(e.counts || {})) if (CAT_IDS.has(k) && Number.isInteger(v) && v !== 0) counts[k] = v;
   return { uid: typeof e.uid === "string" && e.uid ? e.uid : uid(), label: String(e.label).slice(0, 80), date: /^\d{4}-\d{2}-\d{2}$/.test(e.date || "") ? e.date : null, counts };
 }
+/* Succès : { identifiant: [date palier 1, 2, 3] }, date = AAAA-MM-JJ, "-" = avant le suivi, null = pas obtenu */
+function cleanAchv(o) {
+  const out = {};
+  for (const [k, v] of Object.entries(o)) if (/^[\w:.-]{1,40}$/.test(k) && Array.isArray(v)) out[k] = [0, 1, 2].map(i => (typeof v[i] === "string" && /^(\d{4}-\d{2}-\d{2}|-)$/.test(v[i]) ? v[i] : null));
+  return out;
+}
+const pickDate = (p, q) => { const r = [p, q].filter(Boolean); if (!r.length) return null; const real = r.filter(s => s !== "-").sort(); return real.length ? real[0] : "-"; };
+function mergeAchv(a, b) {                              // un succès obtenu le reste : on garde la plus ancienne date réelle
+  const out = {};
+  for (const k of new Set([...Object.keys(a || {}), ...Object.keys(b || {})])) { const x = (a || {})[k] || [], y = (b || {})[k] || []; out[k] = [0, 1, 2].map(i => pickDate(x[i], y[i])); }
+  return out;
+}
 function normalizeData(d) {
   if (!d || typeof d !== "object") throw new Error("format");
-  const out = { shiny: {}, cards: null, journal: null };
+  const out = { shiny: {}, cards: null, journal: null, achv: null };
   if (d.app === "roue-pokemon") {                   // ancienne roue : un jeu = première version
     for (const [gid, arr] of Object.entries(d.shiny || {})) {
       const v = VERSIONS.find(x => x.group === gid);
@@ -618,6 +670,7 @@ function normalizeData(d) {
   if (d.app !== "pokehub") throw new Error("format");
   for (const [vid, arr] of Object.entries(d.shiny || {})) if (VBY[vid] && Array.isArray(arr)) out.shiny[vid] = new Set(arr.filter(validId));
   if (Array.isArray(d.cards)) out.cards = new Set(d.cards.filter(validId));
+  if (d.achv && typeof d.achv === "object") out.achv = cleanAchv(d.achv);
   if (Array.isArray(d.journal)) out.journal = d.journal.filter(e => e && typeof e.label === "string" && e.counts && typeof e.counts === "object").map(cleanEntry);
   return out;
 }
@@ -628,9 +681,11 @@ function applyData(n, mode) {
     for (const [v, s] of Object.entries(n.shiny)) { db.shiny[v] = new Set(s); added.shiny += s.size; }
     if (n.cards) { db.cards = new Set(n.cards); added.cards = n.cards.size; }
     if (n.journal) { db.journal = n.journal.map(e => ({ ...e })); added.journal = n.journal.length; }
+    if (n.achv) db.achv = n.achv;
   } else {
     for (const [v, s] of Object.entries(n.shiny)) { const cur = vSet(v); for (const id of s) if (!cur.has(id)) { cur.add(id); added.shiny++; } }
     if (n.cards) for (const id of n.cards) if (!db.cards.has(id)) { db.cards.add(id); added.cards++; }
+    if (n.achv) db.achv = mergeAchv(db.achv, n.achv);
     if (n.journal) { const have = new Set(db.journal.map(e => e.uid)); for (const e of n.journal) if (!have.has(e.uid)) { db.journal.push({ ...e }); added.journal++; } }
   }
   touch();
@@ -642,6 +697,7 @@ function exportData(withPrefs = false) {
     shiny: Object.fromEntries(Object.entries(db.shiny).filter(([, s]) => s.size).map(([v, s]) => [v, [...s].sort((a, b) => a - b)])),
     cards: [...db.cards].sort((a, b) => a - b),
     journal: db.journal,
+    achv: db.achv,
   };
   if (withPrefs) o.prefs = db.prefs;
   return o;
@@ -654,7 +710,7 @@ function loadDB() {
     if (raw) {
       const d = JSON.parse(raw);
       const n = normalizeData(d);
-      db.shiny = n.shiny; db.cards = n.cards || new Set(); db.journal = n.journal || [];
+      db.shiny = n.shiny; db.cards = n.cards || new Set(); db.journal = n.journal || []; db.achv = n.achv || {};
       db.prefs = Object.assign(defaultPrefs(), d.prefs || {});
       if (!Array.isArray(db.prefs.cols) || !db.prefs.cols.every(c => VBY[c])) db.prefs.cols = [...DEFAULT_COLS];
       db.updatedAt = d.updatedAt || 0;
@@ -688,10 +744,11 @@ const views = {};
 let activeView = "wheel";
 let rafId = 0;
 /* Une modification ne rend « sale » que les vues qui en dépendent. */
-const DEPS = { shiny: ["wheel", "shiny", "data"], cards: ["wheel", "cards", "data"], journal: ["cards", "data"] };
+const DEPS = { shiny: ["wheel", "shiny", "data", "achv"], cards: ["wheel", "cards", "data"], journal: ["cards", "data"] };
 function touch(skip, noSync, what) {
   unionCache = null; db.updatedAt = Date.now(); saveSoon();
   if (!noSync) scheduleSync();
+  if (what === "shiny") scheduleAchv("live"); else if (!what) scheduleAchv("silent");
   for (const k of (DEPS[what] || Object.keys(views))) if (k !== skip && views[k]) views[k].dirty = true;
   scheduleRender();
 }
@@ -700,8 +757,9 @@ function renderActive() { const v = views[activeView]; if (v && v.dirty) { v.dir
 function renderHeader() {
   $("#pillShiny").textContent = `✦ ${shinyUnion().size}`;
   $("#pillCards").textContent = `${db.cards.size} / ${NMAX}`;
+  const un = achUnseen(), dot = $("#achvDot"); dot.hidden = !un; dot.textContent = un;
 }
-const TABS = ["wheel", "shiny", "cards", "data"];
+const TABS = ["wheel", "shiny", "cards", "achv", "data"];
 const scrollMem = {};
 function show(name) {
   if (!TABS.includes(name)) name = "wheel";
@@ -1461,15 +1519,15 @@ try { const c = JSON.parse(localStorage.getItem(SYNC_KEY)); if (c && c.repo && c
 let syncing = false, syncPending = false, syncTimer = 0;
 const syncInfo = { text: "", bad: false, at: 0 };
 
-const snap = () => ({ shiny: Object.fromEntries(Object.entries(db.shiny).map(([k, s]) => [k, new Set(s)])), cards: new Set(db.cards), journal: db.journal.map(e => ({ ...e, counts: { ...e.counts } })) });
+const snap = () => ({ shiny: Object.fromEntries(Object.entries(db.shiny).map(([k, s]) => [k, new Set(s)])), cards: new Set(db.cards), journal: db.journal.map(e => ({ ...e, counts: { ...e.counts } })), achv: JSON.parse(JSON.stringify(db.achv)) });
 const serialize = n => ({
   app: "pokehub", v: 1, updatedAt: Date.now(),
   shiny: Object.fromEntries(Object.entries(n.shiny).filter(([, s]) => s.size).map(([k, s]) => [k, [...s].sort((a, b) => a - b)])),
-  cards: [...n.cards].sort((a, b) => a - b), journal: n.journal,
+  cards: [...n.cards].sort((a, b) => a - b), journal: n.journal, achv: n.achv || {},
 });
-const canon = n => JSON.stringify({ s: Object.keys(n.shiny).sort().filter(k => n.shiny[k].size).map(k => [k, [...n.shiny[k]].sort((a, b) => a - b)]), c: [...n.cards].sort((a, b) => a - b), j: n.journal });
-const asState = n => ({ shiny: n.shiny, cards: n.cards || new Set(), journal: n.journal || [] });
-function loadBase() { try { const raw = localStorage.getItem(BASE_KEY); if (raw) return asState(normalizeData(JSON.parse(raw))); } catch (_) {} return { shiny: {}, cards: new Set(), journal: [] }; }
+const canon = n => JSON.stringify({ s: Object.keys(n.shiny).sort().filter(k => n.shiny[k].size).map(k => [k, [...n.shiny[k]].sort((a, b) => a - b)]), c: [...n.cards].sort((a, b) => a - b), j: n.journal, a: Object.keys(n.achv || {}).sort().map(k => [k, n.achv[k]]) });
+const asState = n => ({ shiny: n.shiny, cards: n.cards || new Set(), journal: n.journal || [], achv: n.achv || {} });
+function loadBase() { try { const raw = localStorage.getItem(BASE_KEY); if (raw) return asState(normalizeData(JSON.parse(raw))); } catch (_) {} return { shiny: {}, cards: new Set(), journal: [], achv: {} }; }
 function saveBase(n) { try { localStorage.setItem(BASE_KEY, JSON.stringify(serialize(n))); } catch (_) {} }
 
 function mergeSets(base, a, b) {
@@ -1494,7 +1552,7 @@ function mergeJournal(base, a, b) {
 function merge3(base, local, remote) {
   const shiny = {};
   for (const k of new Set([...Object.keys(base.shiny), ...Object.keys(local.shiny), ...Object.keys(remote.shiny)])) shiny[k] = mergeSets(base.shiny[k] || new Set(), local.shiny[k] || new Set(), remote.shiny[k] || new Set());
-  return { shiny, cards: mergeSets(base.cards, local.cards, remote.cards), journal: mergeJournal(base.journal, local.journal, remote.journal) };
+  return { shiny, cards: mergeSets(base.cards, local.cards, remote.cards), journal: mergeJournal(base.journal, local.journal, remote.journal), achv: mergeAchv(local.achv, remote.achv) };
 }
 
 /* ---------- API GitHub ---------- */
@@ -1535,7 +1593,7 @@ async function syncNow() {
       const rs = remote ? asState(normalizeData(remote.data)) : null;
       const merged = rs ? merge3(base, local, rs) : local;
       const changedLocal = canon(merged) !== canon(local);
-      if (changedLocal) { db.shiny = merged.shiny; db.cards = merged.cards; db.journal = merged.journal; }
+      if (changedLocal) { const before = achTotals().all; db.shiny = merged.shiny; db.cards = merged.cards; db.journal = merged.journal; db.achv = merged.achv; db.prefs.achvSeen = (db.prefs.achvSeen ?? before) + (achTotals().all - before); }
       if (!rs || canon(merged) !== canon(rs)) {
         try { await ghPut(serialize(merged), remote && remote.sha); }
         catch (e) { if ((e.code === 409 || e.code === 422) && attempt < 2) continue; throw e; }
@@ -1584,6 +1642,186 @@ function initSync() {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && sync) syncNow(); });
   window.addEventListener("online", () => { if (sync) syncNow(); });
   if (sync) setTimeout(() => syncNow(), 1200);
+}
+
+
+/* ============================================================
+   SUCCÈS : badges à trois paliers + succès cachés (collection de shiny)
+   Les paliers sont calculés d'après vos données ; seule la date
+   d'obtention est enregistrée (et synchronisée). Un palier obtenu le reste.
+   ============================================================ */
+const TIER_NAMES = ["Bronze", "Argent", "Or"];
+const PSEUDO = [149, 248, 373, 376, 445, 635, 706, 784, 887, 998];
+const EEVEE = [133, 134, 135, 136, 196, 197, 470, 471, 700];
+const FOSSILS = [138, 139, 140, 141, 142, 345, 346, 347, 348, 408, 409, 410, 411, 564, 565, 566, 567, 696, 697, 698, 699, 880, 881, 882, 883];
+const TEAMS = [[144, 145, 146], [243, 244, 245], [377, 378, 379], [480, 481, 482], [638, 639, 640], [641, 642, 645], [785, 786, 787, 788], [1001, 1002, 1003, 1004]];
+const TOT = { gen: {}, type: {}, leg: 0, myth: 0, baby: 0 };
+for (const p of POKEMON) {
+  TOT.gen[p.gen] = (TOT.gen[p.gen] || 0) + 1;
+  for (const t of p.types) TOT.type[t] = (TOT.type[t] || 0) + 1;
+  if (p.legendary) TOT.leg++; if (p.mythical) TOT.myth++; if (p.baby) TOT.baby++;
+}
+
+function achMetrics() {
+  const U = shinyUnion(), per = new Map();
+  const m = { total: U.size, grp: {}, gen: {}, type: {}, leg: 0, myth: 0, baby: 0, starters: 0, pseudo: 0, eevee: 0, fossil: 0, teams: 0, letters: new Set(), starterLine: false };
+  for (const v of VERSIONS) for (const id of (db.shiny[v.id] || [])) per.set(id, (per.get(id) || 0) + 1);
+  m.versionsWith = VERSIONS.filter(v => (db.shiny[v.id] || new Set()).size > 0).length;
+  m.shared2 = [...per.values()].filter(n => n >= 2).length;
+  m.maxMulti = per.size ? Math.max(...per.values()) : 0;
+  for (const g of [...GAMES, { id: "go" }]) {
+    const s = new Set(); for (const v of VERSIONS) if (v.group === g.id) for (const id of (db.shiny[v.id] || [])) s.add(id);
+    m.grp[g.id] = g.id === "go" ? s.size : [...s].filter(id => GAME_SETS.get(g.id).has(id)).length;
+  }
+  for (const id of U) {
+    const p = P(id);
+    m.gen[p.gen] = (m.gen[p.gen] || 0) + 1;
+    for (const t of p.types) m.type[t] = (m.type[t] || 0) + 1;
+    if (p.legendary) m.leg++; if (p.mythical) m.myth++; if (p.baby) m.baby++;
+    if (isStarter(id)) m.starters++;
+    const c = norm(p.name)[0]; if (c >= "a" && c <= "z") m.letters.add(c);
+  }
+  m.pseudo = PSEUDO.filter(i => U.has(i)).length; m.eevee = EEVEE.filter(i => U.has(i)).length; m.fossil = FOSSILS.filter(i => U.has(i)).length;
+  m.teams = TEAMS.filter(t => t.every(i => U.has(i))).length;
+  for (const [a] of STARTER_RANGES) for (const k of [0, 3, 6]) if (U.has(a + k) && U.has(a + k + 1) && U.has(a + k + 2)) m.starterLine = true;
+  m.dexComplete = GAMES.some(g => !g.noShiny && m.grp[g.id] >= GAME_SETS.get(g.id).size);
+  return m;
+}
+
+/* ---------- Catalogue ---------- */
+const BADGES = [];
+const tiered = (id, cat, name, desc, tiers, value) => BADGES.push({ id, cat, name, desc, tiers, value });
+const secret = (id, name, desc, hint, test) => BADGES.push({ id, cat: "hidden", hidden: true, name, desc: () => desc, hint, tiers: [1], value: m => (test(m) ? 1 : 0) });
+const ratio = (n, r) => Math.max(1, Math.ceil(n * r));
+
+tiered("col", "col", "Collectionneur étincelant", n => `Obtenir ${n} shiny différents`, [50, 150, 300], m => m.total);
+tiered("jeux", "col", "Chasseur polyvalent", n => `Avoir au moins un shiny dans ${n} jeux différents`, [3, 6, 10], m => m.versionsWith);
+tiered("partage", "col", "Éclats partagés", n => `${n} Pokémon obtenus en shiny dans au moins 2 jeux`, [5, 15, 40], m => m.shared2);
+tiered("starters", "series", "Starters étincelants", n => `${n} starters en shiny (lignées complètes comprises)`, [3, 12, 27], m => m.starters);
+tiered("leg", "series", "Légendes brillantes", n => `${n} légendaires en shiny`, [3, 10, TOT.leg], m => m.leg);
+tiered("myth", "series", "Fabuleux et rares", n => `${n} Pokémon fabuleux en shiny`, [1, 5, TOT.myth], m => m.myth);
+tiered("baby", "series", "Petits éclats", n => `${n} bébés Pokémon en shiny`, [1, 5, TOT.baby], m => m.baby);
+tiered("pseudo", "series", "Dragons pseudo-légendaires", n => `${n} pseudo-légendaires finaux en shiny`, [3, 6, 10], m => m.pseudo);
+tiered("evoli", "series", "Famille Évoli", n => `${n} membres de la famille Évoli en shiny`, [3, 6, 9], m => m.eevee);
+tiered("fossile", "series", "Fossiles lumineux", n => `${n} Pokémon fossiles en shiny`, [3, 10, FOSSILS.length], m => m.fossil);
+tiered("teams", "series", "Équipes légendaires", n => `${n} groupes de légendaires complets en shiny (trios, quatuors)`, [1, 3, TEAMS.length], m => m.teams);
+for (const g of Object.keys(GEN_NAMES)) tiered("gen" + g, "gen", `Pokédex shiny : ${GEN_NAMES[g]}`, n => `${n} shiny de la génération ${g} (${GEN_NAMES[g]})`, [ratio(TOT.gen[g], .2), ratio(TOT.gen[g], .5), TOT.gen[g]], m => m.gen[g] || 0);
+for (const [t, T] of Object.entries(TYPES)) tiered("type_" + t, "type", `Éclats de type ${T.fr}`, n => `${n} Pokémon de type ${T.fr} en shiny`, [ratio(TOT.type[t], .1), ratio(TOT.type[t], .33), TOT.type[t]], m => m.type[t] || 0);
+for (const g of GAMES.filter(x => !x.noShiny)) { const n = GAME_SETS.get(g.id).size; tiered("game_" + g.id, "game", `Dex shiny : ${g.label}`, k => `${k} shiny dans le Pokédex de ${g.label}`, [Math.max(5, ratio(n, .1)), ratio(n, .5), n], m => m.grp[g.id] || 0); }
+tiered("game_go", "game", "Dex shiny : Pokémon GO", n => `${n} shiny obtenus dans Pokémon GO`, [50, 150, 300], m => m.grp.go || 0);
+
+secret("s_jumeau", "Éclat jumeau", "Un même Pokémon obtenu en shiny dans deux jeux différents.", "Une même étincelle, deux mondes.", m => m.maxMulti >= 2);
+secret("s_triple", "Triple éclat", "Un même Pokémon obtenu en shiny dans trois jeux différents.", "Et une troisième fois, pour la route.", m => m.maxMulti >= 3);
+secret("s_monde", "Tour du monde", "Au moins un shiny de chacune des neuf générations.", "Neuf régions, un éclat dans chacune.", m => Object.keys(GEN_NAMES).every(g => (m.gen[g] || 0) > 0));
+secret("s_arc", "Arc-en-ciel", "Au moins un shiny de chacun des 18 types.", "Toutes les couleurs du monde Pokémon.", m => Object.keys(TYPES).every(t => (m.type[t] || 0) > 0));
+secret("s_151", "Pokédex d’origine", "Atteindre 151 shiny différents, comme le Pokédex de Kanto.", "Autant que les tout premiers.", m => m.total >= 151);
+secret("s_abc", "Abécédaire", "Des shiny dont les noms commencent par 20 lettres différentes.", "De A à presque Z.", m => m.letters.size >= 20);
+secret("s_ligne", "Histoire complète", "Une lignée de starter entière en shiny, des trois évolutions.", "Trois étapes d’une même histoire.", m => m.starterLine);
+secret("s_pika", "La mascotte", "Obtenir Pikachu en shiny.", "Le plus célèbre des rongeurs électriques, en plus rare.", m => shinyAny(25));
+secret("s_legende", "Éclat de légende", "Obtenir un légendaire ou un fabuleux en shiny.", "Rare parmi les rares.", m => m.leg + m.myth > 0);
+secret("s_bebe", "Bébé étincelant", "Obtenir un bébé Pokémon en shiny.", "Même les plus petits brillent.", m => m.baby > 0);
+secret("s_paleo", "Paléontologue", "Cinq Pokémon fossiles en shiny.", "Des éclats venus du fond des âges.", m => m.fossil >= 5);
+secret("s_parfait", "Monde parfait", "Compléter le Pokédex shiny d’un jeu entier.", "Un monde entier, sans exception.", m => m.dexComplete);
+
+/* ---------- Évaluation ---------- */
+const localToday = () => new Date().toLocaleDateString("sv-SE");
+const dateLabel = d => (d === "-" ? "avant le suivi" : fmtDate(d));
+function badgeState(b, m) {
+  const v = b.value(m), have = db.achv[b.id] || [], earned = b.tiers.map((_, i) => !!have[i]), n = earned.filter(Boolean).length;
+  return { v, have, earned, n, next: b.tiers[n] };
+}
+function achTotals() {
+  let tiers = 0, earned = 0, hid = 0, hidTotal = 0;
+  for (const b of BADGES) { const have = db.achv[b.id] || []; if (b.hidden) { hidTotal++; if (have[0]) hid++; } else { tiers += b.tiers.length; earned += b.tiers.filter((_, i) => have[i]).length; } }
+  return { tiers, earned, hid, hidTotal, all: earned + hid };
+}
+/* mode : "live" (toast pour tout), "silent" (dates « avant le suivi »), "seed" (premier lancement : seuls les cachés se révèlent) */
+function evaluateAchv(mode) {
+  const m = achMetrics(), today = localToday(), found = [];
+  for (const b of BADGES) {
+    const v = b.value(m), reached = b.tiers.filter(t => v >= t).length, have = db.achv[b.id] ? [...db.achv[b.id]] : [null, null, null];
+    let changed = false;
+    for (let k = 0; k < reached; k++) if (!have[k]) {
+      const loud = mode === "live" || (mode === "seed" && b.hidden);
+      have[k] = loud ? today : "-"; changed = true; found.push({ b, k, loud });
+    }
+    if (changed) db.achv[b.id] = have;
+  }
+  if (found.length) { saveSoon(); scheduleSync(); if (views.achv) views.achv.dirty = true; scheduleRender(); }
+  return found;
+}
+let achMode = null;
+function scheduleAchv(mode) {
+  achMode = achMode === "live" ? "live" : mode;
+  clearTimeout(scheduleAchv.t);
+  scheduleAchv.t = setTimeout(() => {
+    let md = achMode; achMode = null;
+    if (md === "silent" && !Object.keys(db.achv).length && shinyUnion().size > 0) md = "seed";   // première fois avec des données : les cachés se révèlent
+    announce(evaluateAchv(md), md);
+  }, 60);
+}
+function announce(found, mode) {
+  const loud = found.filter(f => f.loud);
+  // « vus » avance des déblocages silencieux : seuls les déblocages annoncés restent à découvrir (pastille)
+  db.prefs.achvSeen = (db.prefs.achvSeen ?? (achTotals().all - found.length)) + found.filter(f => !f.loud).length;
+  if (found.length) saveSoon();
+  if (loud.length) {
+    const f = loud[0], hid = f.b.hidden;
+    toast(loud.length === 1
+      ? (hid ? `Succès caché découvert : ${f.b.name}` : `${TIER_NAMES[f.k]} : ${f.b.name}`)
+      : `${loud.length} nouveaux succès débloqués !`, () => show("achv"), "Voir");
+  }
+  renderHeader();
+}
+const achUnseen = () => Math.max(0, achTotals().all - (db.prefs.achvSeen ?? achTotals().all));
+
+/* ---------- Affichage ---------- */
+const ACH = { filter: "all" };
+const medal = t => `<svg viewBox="0 0 40 40" class="medal m${t}" aria-hidden="true"><path class="rib" d="M12 2h16l-3.5 13h-9z"/><circle class="disc" cx="20" cy="26" r="11"/><path class="star" d="M20 19.5l2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7z"/></svg>`;
+function tieredCard(b) {
+  const s = badgeState(b, achMetrics.cache), done = s.n === b.tiers.length;
+  const pct = done ? 100 : Math.min(100, Math.round(s.v / s.next * 100));
+  const lines = b.tiers.map((t, i) => `<li class="${s.have[i] ? "on" : ""}"><b>${TIER_NAMES[i]}</b><span>${esc(b.desc(t))}</span><em>${s.have[i] ? esc(dateLabel(s.have[i])) : ""}</em></li>`).join("");
+  const dots = b.tiers.map((_, i) => `<i class="td d${i + 1}${s.have[i] ? " on" : ""}"></i>`).join("");
+  return `<details class="ach m${s.n}${done ? " done" : ""}"><summary>${medal(s.n)}<div class="ach-body"><h4>${esc(b.name)}</h4><p>${done ? "Tous les paliers obtenus" : esc("Prochain palier : " + b.desc(s.next))}</p>${done ? "" : `<div class="bar"><i style="width:${pct}%"></i></div><small>${Math.min(s.v, s.next)} / ${s.next}</small>`}</div><span class="ach-tiers">${dots}</span></summary><ul class="ach-lines">${lines}</ul></details>`;
+}
+function secretCard(b) {
+  const d = (db.achv[b.id] || [])[0];
+  if (!d) return `<div class="ach secret locked"><svg viewBox="0 0 40 40" class="medal m0" aria-hidden="true"><circle class="disc" cx="20" cy="22" r="13"/><text x="20" y="28" text-anchor="middle" font-size="18" font-weight="800" fill="currentColor">?</text></svg><div class="ach-body"><h4>Succès caché</h4><p class="cryptic">${esc(b.hint)}</p></div></div>`;
+  return `<div class="ach secret found"><svg viewBox="0 0 40 40" class="medal mH" aria-hidden="true"><circle class="disc" cx="20" cy="22" r="13"/><path class="star" d="M20 12l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9z"/></svg><div class="ach-body"><h4>${esc(b.name)}</h4><p>${esc(b.desc())}</p><small>${esc(dateLabel(d))}</small></div></div>`;
+}
+function renderAchv() {
+  const m = achMetrics(); achMetrics.cache = m;
+  const T = achTotals(), tiered_ = BADGES.filter(b => !b.hidden);
+  $("#avCount").textContent = `${T.earned} / ${T.tiers}`;
+  $("#avSub").textContent = `paliers obtenus, et ${T.hid} / ${T.hidTotal} succès cachés découverts`;
+  $("#avBar").style.width = (T.tiers ? (T.earned / T.tiers) * 100 : 0) + "%";
+  $$("#avFilter button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.f === ACH.filter)));
+  const keep = b => {
+    const s = badgeState(b, m);
+    if (ACH.filter === "doing") return s.n < b.tiers.length && s.v > 0;
+    if (ACH.filter === "done") return s.n > 0;
+    return true;
+  };
+  const section = (title, cards, open, extra = "") => cards.length ? `<details class="achsec"${open ? " open" : ""}><summary>${title}<span>${extra}</span></summary><div class="achgrid">${cards.join("")}</div></details>` : "";
+  const by = c => tiered_.filter(b => b.cat === c && keep(b));
+  const near = tiered_.map(b => ({ b, s: badgeState(b, m) })).filter(x => x.s.n < x.b.tiers.length && x.s.v > 0).sort((a, b) => b.s.v / b.s.next - a.s.v / a.s.next).slice(0, 6).map(x => tieredCard(x.b));
+  const hidden = BADGES.filter(b => b.hidden);
+  const shownHidden = ACH.filter === "all" ? hidden : hidden.filter(b => (db.achv[b.id] || [])[0] && ACH.filter === "done");
+  $("#avBody").innerHTML =
+    (ACH.filter === "all" ? section("Les plus proches", near, true) : "") +
+    section("Collection et séries", [...by("col"), ...by("series")].map(tieredCard), true) +
+    section("Par génération", by("gen").map(tieredCard), false) +
+    section("Par type", by("type").map(tieredCard), false) +
+    section("Par jeu", by("game").map(tieredCard), false) +
+    (ACH.filter === "doing" ? "" : section("Succès cachés", shownHidden.map(secretCard), true, `${T.hid} / ${T.hidTotal}`)) || `<p class="empty">Rien à afficher ici pour le moment.</p>`;
+}
+function markAchvSeen() { db.prefs.achvSeen = achTotals().all; saveSoon(); renderHeader(); }
+function initAchv() {
+  views.achv = { dirty: true, render: renderAchv, onShow: markAchvSeen };
+  $("#avFilter").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { ACH.filter = b.dataset.f; renderAchv(); } });
+  const first = !Object.keys(db.achv).length && shinyUnion().size > 0;
+  announce(evaluateAchv(first ? "seed" : "silent"), first ? "seed" : "silent");
 }
 
 /* ============================================================
@@ -1652,11 +1890,11 @@ function initData() {
   if (!SEED) $("#dtReset").hidden = true;
   $("#dtReset").addEventListener("click", () => {
     if (!confirm("Revenir aux données d’origine de vos tableurs ? Vos modifications seront perdues.")) return;
-    seedDB(); excluded.clear(); touch(); setDtMsg("Données d’origine restaurées.");
+    seedDB(); db.achv = {}; excluded.clear(); touch(); setDtMsg("Données d’origine restaurées.");
   });
   $("#dtWipe").addEventListener("click", () => {
     if (!confirm("Tout effacer (shiny, cartes, journal) ? Pensez à exporter une sauvegarde avant.")) return;
-    db.shiny = {}; db.cards = new Set(); db.journal = []; excluded.clear(); touch(); setDtMsg("Toutes les données ont été effacées.");
+    db.shiny = {}; db.cards = new Set(); db.journal = []; db.achv = {}; excluded.clear(); touch(); setDtMsg("Toutes les données ont été effacées.");
   });
   let deferred = null;
   window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; $("#dtInstall").hidden = false; });
@@ -1668,7 +1906,7 @@ function initData() {
    ============================================================ */
 function initApp() {
   loadDB();
-  initWheel(); initShiny(); initCards(); initData(); initSync();
+  initWheel(); initShiny(); initCards(); initData(); initSync(); initAchv();
   $$("#tabs [data-tab]").forEach(b => b.addEventListener("click", () => show(b.dataset.tab)));
   window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (TABS.includes(h) && h !== activeView) show(h); });
   for (const k in views) views[k].dirty = true;
