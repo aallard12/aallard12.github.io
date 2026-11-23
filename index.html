@@ -319,6 +319,16 @@ button, summary, select { touch-action: manipulation; }
 .td.on.d1 { background: #cd7f32; border-color: #a5622a; } .td.on.d2 { background: #c3cad6; border-color: #8f99a9; } .td.on.d3 { background: #ffc531; border-color: #d99a00; }
 .ach-lines { list-style: none; margin: 0; padding: 0 12px 12px; display: grid; gap: 6px; font-size: .85rem; }
 .ach-lines li { display: grid; grid-template-columns: 64px 1fr auto; gap: 8px; opacity: .55; } .ach-lines li.on { opacity: 1; } .ach-lines em { color: var(--muted); font-style: normal; }
+
+.ach.m4 .disc { fill: #7fd6d0; stroke: #3fb0aa; } .ach.m4 .rib { fill: #3fb0aa; }
+.ach.m5 .disc { fill: #5ec8ff; stroke: #2a9de0; } .ach.m5 .rib { fill: #2a9de0; }
+.ach.m6 .disc { fill: #e5384b; stroke: #b61f31; } .ach.m6 .rib { fill: #b61f31; }
+.ach.m7 .disc { fill: #8b5cf6; stroke: #6a3fd8; } .ach.m7 .rib { fill: #6a3fd8; }
+.ach.m8 .disc { fill: #141c3a; stroke: #ffc531; stroke-width: 2.5; } .ach.m8 .rib { fill: #ffc531; } .ach.m8 .star { fill: #ffc531; }
+.ach.m8 .medal { filter: drop-shadow(0 0 6px rgba(255, 197, 49, .85)); }
+.td { width: 9px; height: 9px; } .ach-tiers { flex-wrap: wrap; max-width: 52px; justify-content: flex-end; }
+.td.on.d4 { background: #7fd6d0; border-color: #3fb0aa; } .td.on.d5 { background: #5ec8ff; border-color: #2a9de0; } .td.on.d6 { background: #e5384b; border-color: #b61f31; } .td.on.d7 { background: #8b5cf6; border-color: #6a3fd8; } .td.on.d8 { background: #141c3a; border-color: #ffc531; }
+.ach-lines li { grid-template-columns: 70px 1fr auto; }
 </style>
 </head>
 <body>
@@ -645,16 +655,25 @@ function cleanEntry(e) {
   for (const [k, v] of Object.entries(e.counts || {})) if (CAT_IDS.has(k) && Number.isInteger(v) && v !== 0) counts[k] = v;
   return { uid: typeof e.uid === "string" && e.uid ? e.uid : uid(), label: String(e.label).slice(0, 80), date: /^\d{4}-\d{2}-\d{2}$/.test(e.date || "") ? e.date : null, counts };
 }
-/* Succès : { identifiant: [date palier 1, 2, 3] }, date = AAAA-MM-JJ, "-" = avant le suivi, null = pas obtenu */
+/* Succès : { identifiant: { "seuil": date } }, date = AAAA-MM-JJ ou "-" (avant le suivi). Ancien format (tableaux) : seuls les cachés sont repris. */
+const ACH_DATE = /^(\d{4}-\d{2}-\d{2}|-)$/;
 function cleanAchv(o) {
   const out = {};
-  for (const [k, v] of Object.entries(o)) if (/^[\w:.-]{1,40}$/.test(k) && Array.isArray(v)) out[k] = [0, 1, 2].map(i => (typeof v[i] === "string" && /^(\d{4}-\d{2}-\d{2}|-)$/.test(v[i]) ? v[i] : null));
+  for (const [k, v] of Object.entries(o)) {
+    if (!/^[\w:.-]{1,40}$/.test(k)) continue;
+    if (Array.isArray(v)) { if (k.startsWith("s_") && ACH_DATE.test(v[0] || "")) out[k] = { 1: v[0] }; continue; }
+    if (v && typeof v === "object") { const t = {}; for (const [th, d] of Object.entries(v)) if (/^\d{1,5}$/.test(th) && typeof d === "string" && ACH_DATE.test(d)) t[th] = d; if (Object.keys(t).length) out[k] = t; }
+  }
   return out;
 }
 const pickDate = (p, q) => { const r = [p, q].filter(Boolean); if (!r.length) return null; const real = r.filter(s => s !== "-").sort(); return real.length ? real[0] : "-"; };
 function mergeAchv(a, b) {                              // un succès obtenu le reste : on garde la plus ancienne date réelle
   const out = {};
-  for (const k of new Set([...Object.keys(a || {}), ...Object.keys(b || {})])) { const x = (a || {})[k] || [], y = (b || {})[k] || []; out[k] = [0, 1, 2].map(i => pickDate(x[i], y[i])); }
+  for (const k of new Set([...Object.keys(a || {}), ...Object.keys(b || {})])) {
+    const x = (a || {})[k] || {}, y = (b || {})[k] || {}, o = {};
+    for (const t of new Set([...Object.keys(x), ...Object.keys(y)])) o[t] = pickDate(x[t], y[t]);
+    out[k] = o;
+  }
   return out;
 }
 function normalizeData(d) {
@@ -1525,7 +1544,7 @@ const serialize = n => ({
   shiny: Object.fromEntries(Object.entries(n.shiny).filter(([, s]) => s.size).map(([k, s]) => [k, [...s].sort((a, b) => a - b)])),
   cards: [...n.cards].sort((a, b) => a - b), journal: n.journal, achv: n.achv || {},
 });
-const canon = n => JSON.stringify({ s: Object.keys(n.shiny).sort().filter(k => n.shiny[k].size).map(k => [k, [...n.shiny[k]].sort((a, b) => a - b)]), c: [...n.cards].sort((a, b) => a - b), j: n.journal, a: Object.keys(n.achv || {}).sort().map(k => [k, n.achv[k]]) });
+const canon = n => JSON.stringify({ s: Object.keys(n.shiny).sort().filter(k => n.shiny[k].size).map(k => [k, [...n.shiny[k]].sort((a, b) => a - b)]), c: [...n.cards].sort((a, b) => a - b), j: n.journal, a: Object.keys(n.achv || {}).sort().map(k => [k, Object.keys(n.achv[k]).sort().map(t => [t, n.achv[k][t]])]) });
 const asState = n => ({ shiny: n.shiny, cards: n.cards || new Set(), journal: n.journal || [], achv: n.achv || {} });
 function loadBase() { try { const raw = localStorage.getItem(BASE_KEY); if (raw) return asState(normalizeData(JSON.parse(raw))); } catch (_) {} return { shiny: {}, cards: new Set(), journal: [], achv: {} }; }
 function saveBase(n) { try { localStorage.setItem(BASE_KEY, JSON.stringify(serialize(n))); } catch (_) {} }
@@ -1646,11 +1665,12 @@ function initSync() {
 
 
 /* ============================================================
-   SUCCÈS : badges à trois paliers + succès cachés (collection de shiny)
-   Les paliers sont calculés d'après vos données ; seule la date
-   d'obtention est enregistrée (et synchronisée). Un palier obtenu le reste.
+   SUCCÈS : badges à paliers (jusqu'à 8) + succès cachés (collection de shiny)
+   Les paliers sont calculés d'après vos données ; seule la date d'obtention
+   est enregistrée (et synchronisée), par seuil : { id: { "150": "2026-11-04" } }.
+   Un palier obtenu le reste.
    ============================================================ */
-const TIER_NAMES = ["Bronze", "Argent", "Or"];
+const TIER_NAMES = ["Bronze", "Argent", "Or", "Platine", "Diamant", "Rubis", "Maître", "Légende"];
 const PSEUDO = [149, 248, 373, 376, 445, 635, 706, 784, 887, 998];
 const EEVEE = [133, 134, 135, 136, 196, 197, 470, 471, 700];
 const FOSSILS = [138, 139, 140, 141, 142, 345, 346, 347, 348, 408, 409, 410, 411, 564, 565, 566, 567, 696, 697, 698, 699, 880, 881, 882, 883];
@@ -1692,23 +1712,29 @@ function achMetrics() {
 const BADGES = [];
 const tiered = (id, cat, name, desc, tiers, value) => BADGES.push({ id, cat, name, desc, tiers, value });
 const secret = (id, name, desc, hint, test) => BADGES.push({ id, cat: "hidden", hidden: true, name, desc: () => desc, hint, tiers: [1], value: m => (test(m) ? 1 : 0) });
-const ratio = (n, r) => Math.max(1, Math.ceil(n * r));
+const FR8 = [0.05, 0.15, 0.30, 0.50, 0.70, 0.85, 0.95, 1];
+function steps(total, fr = FR8) {                        // seuils croissants, le dernier = tout
+  const out = [];
+  for (const f of fr) { const t = f >= 1 ? total : Math.max(1, Math.ceil(total * f)); if (!out.length || t > out[out.length - 1]) out.push(t); }
+  return out;
+}
+const FR6 = [0.1, 0.25, 0.5, 0.75, 0.9, 1];
 
-tiered("col", "col", "Collectionneur étincelant", n => `Obtenir ${n} shiny différents`, [50, 150, 300], m => m.total);
-tiered("jeux", "col", "Chasseur polyvalent", n => `Avoir au moins un shiny dans ${n} jeux différents`, [3, 6, 10], m => m.versionsWith);
-tiered("partage", "col", "Éclats partagés", n => `${n} Pokémon obtenus en shiny dans au moins 2 jeux`, [5, 15, 40], m => m.shared2);
-tiered("starters", "series", "Starters étincelants", n => `${n} starters en shiny (lignées complètes comprises)`, [3, 12, 27], m => m.starters);
-tiered("leg", "series", "Légendes brillantes", n => `${n} légendaires en shiny`, [3, 10, TOT.leg], m => m.leg);
-tiered("myth", "series", "Fabuleux et rares", n => `${n} Pokémon fabuleux en shiny`, [1, 5, TOT.myth], m => m.myth);
-tiered("baby", "series", "Petits éclats", n => `${n} bébés Pokémon en shiny`, [1, 5, TOT.baby], m => m.baby);
-tiered("pseudo", "series", "Dragons pseudo-légendaires", n => `${n} pseudo-légendaires finaux en shiny`, [3, 6, 10], m => m.pseudo);
-tiered("evoli", "series", "Famille Évoli", n => `${n} membres de la famille Évoli en shiny`, [3, 6, 9], m => m.eevee);
-tiered("fossile", "series", "Fossiles lumineux", n => `${n} Pokémon fossiles en shiny`, [3, 10, FOSSILS.length], m => m.fossil);
-tiered("teams", "series", "Équipes légendaires", n => `${n} groupes de légendaires complets en shiny (trios, quatuors)`, [1, 3, TEAMS.length], m => m.teams);
-for (const g of Object.keys(GEN_NAMES)) tiered("gen" + g, "gen", `Pokédex shiny : ${GEN_NAMES[g]}`, n => `${n} shiny de la génération ${g} (${GEN_NAMES[g]})`, [ratio(TOT.gen[g], .2), ratio(TOT.gen[g], .5), TOT.gen[g]], m => m.gen[g] || 0);
-for (const [t, T] of Object.entries(TYPES)) tiered("type_" + t, "type", `Éclats de type ${T.fr}`, n => `${n} Pokémon de type ${T.fr} en shiny`, [ratio(TOT.type[t], .1), ratio(TOT.type[t], .33), TOT.type[t]], m => m.type[t] || 0);
-for (const g of GAMES.filter(x => !x.noShiny)) { const n = GAME_SETS.get(g.id).size; tiered("game_" + g.id, "game", `Dex shiny : ${g.label}`, k => `${k} shiny dans le Pokédex de ${g.label}`, [Math.max(5, ratio(n, .1)), ratio(n, .5), n], m => m.grp[g.id] || 0); }
-tiered("game_go", "game", "Dex shiny : Pokémon GO", n => `${n} shiny obtenus dans Pokémon GO`, [50, 150, 300], m => m.grp.go || 0);
+tiered("col", "col", "Collectionneur étincelant", n => (n === NMAX ? `Les ${NMAX} shiny : le Pokédex shiny complet` : `Obtenir ${n} shiny différents`), [25, 75, 150, 250, 400, 600, 850, NMAX], m => m.total);
+tiered("jeux", "col", "Chasseur polyvalent", n => `Avoir au moins un shiny dans ${n} jeux différents`, [3, 6, 10, 15, 20, 28, 34, 40], m => m.versionsWith);
+tiered("partage", "col", "Éclats partagés", n => `${n} Pokémon obtenus en shiny dans au moins 2 jeux`, [5, 15, 40, 80, 150, 250, 400, 600], m => m.shared2);
+tiered("starters", "series", "Starters étincelants", n => (n === 27 ? "Les 27 starters en shiny" : `${n} starters en shiny (lignées complètes comprises)`), [3, 6, 9, 12, 18, 24, 27], m => m.starters);
+tiered("leg", "series", "Légendes brillantes", n => (n === TOT.leg ? `Tous les légendaires en shiny (${n})` : `${n} légendaires en shiny`), steps(TOT.leg, FR6), m => m.leg);
+tiered("myth", "series", "Fabuleux et rares", n => (n === TOT.myth ? `Tous les Pokémon fabuleux en shiny (${n})` : `${n} Pokémon fabuleux en shiny`), steps(TOT.myth, FR6), m => m.myth);
+tiered("baby", "series", "Petits éclats", n => (n === TOT.baby ? `Tous les bébés Pokémon en shiny (${n})` : `${n} bébés Pokémon en shiny`), steps(TOT.baby, [0.1, 0.3, 0.6, 1]), m => m.baby);
+tiered("pseudo", "series", "Dragons pseudo-légendaires", n => `${n} pseudo-légendaires finaux en shiny`, [2, 4, 6, 8, 10], m => m.pseudo);
+tiered("evoli", "series", "Famille Évoli", n => `${n} membres de la famille Évoli en shiny`, [3, 5, 7, 9], m => m.eevee);
+tiered("fossile", "series", "Fossiles lumineux", n => `${n} Pokémon fossiles en shiny`, [3, 6, 10, 15, 20, FOSSILS.length], m => m.fossil);
+tiered("teams", "series", "Équipes légendaires", n => `${n} groupes de légendaires complets en shiny (trios, quatuors)`, [1, 2, 4, 6, 8], m => m.teams);
+for (const g of Object.keys(GEN_NAMES)) tiered("gen" + g, "gen", `Pokédex shiny : ${GEN_NAMES[g]}`, n => (n === TOT.gen[g] ? `Les ${n} shiny de ${GEN_NAMES[g]} : le Pokédex shiny de la génération ${g}` : `${n} shiny de la génération ${g} (${GEN_NAMES[g]})`), steps(TOT.gen[g]), m => m.gen[g] || 0);
+for (const [t, T] of Object.entries(TYPES)) tiered("type_" + t, "type", `Éclats de type ${T.fr}`, n => (n === TOT.type[t] ? `Tous les Pokémon de type ${T.fr} en shiny (${n})` : `${n} Pokémon de type ${T.fr} en shiny`), steps(TOT.type[t]), m => m.type[t] || 0);
+for (const g of GAMES.filter(x => !x.noShiny)) { const n = GAME_SETS.get(g.id).size; tiered("game_" + g.id, "game", `Dex shiny : ${g.label}`, k => (k === n ? `Le Pokédex shiny complet de ${g.label} (${n})` : `${k} shiny dans le Pokédex de ${g.label}`), steps(n), m => m.grp[g.id] || 0); }
+tiered("game_go", "game", "Dex shiny : Pokémon GO", n => `${n} shiny obtenus dans Pokémon GO`, [25, 75, 150, 300, 450, 650, 800, 900], m => m.grp.go || 0);
 
 secret("s_jumeau", "Éclat jumeau", "Un même Pokémon obtenu en shiny dans deux jeux différents.", "Une même étincelle, deux mondes.", m => m.maxMulti >= 2);
 secret("s_triple", "Triple éclat", "Un même Pokémon obtenu en shiny dans trois jeux différents.", "Et une troisième fois, pour la route.", m => m.maxMulti >= 3);
@@ -1727,24 +1753,26 @@ secret("s_parfait", "Monde parfait", "Compléter le Pokédex shiny d’un jeu en
 const localToday = () => new Date().toLocaleDateString("sv-SE");
 const dateLabel = d => (d === "-" ? "avant le suivi" : fmtDate(d));
 function badgeState(b, m) {
-  const v = b.value(m), have = db.achv[b.id] || [], earned = b.tiers.map((_, i) => !!have[i]), n = earned.filter(Boolean).length;
-  return { v, have, earned, n, next: b.tiers[n] };
+  const v = b.value(m), have = db.achv[b.id] || {}, earned = b.tiers.map(t => !!have[t]), n = earned.filter(Boolean).length, idx = earned.indexOf(false);
+  return { v, have, earned, n, idx, next: idx < 0 ? null : b.tiers[idx] };
 }
 function achTotals() {
   let tiers = 0, earned = 0, hid = 0, hidTotal = 0;
-  for (const b of BADGES) { const have = db.achv[b.id] || []; if (b.hidden) { hidTotal++; if (have[0]) hid++; } else { tiers += b.tiers.length; earned += b.tiers.filter((_, i) => have[i]).length; } }
+  for (const b of BADGES) { const have = db.achv[b.id] || {}; if (b.hidden) { hidTotal++; if (have["1"]) hid++; } else { tiers += b.tiers.length; earned += b.tiers.filter(t => have[t]).length; } }
   return { tiers, earned, hid, hidTotal, all: earned + hid };
 }
-/* mode : "live" (toast pour tout), "silent" (dates « avant le suivi »), "seed" (premier lancement : seuls les cachés se révèlent) */
+/* mode : "live" (annonce tout), "silent" (dates « avant le suivi »), "seed" (premier lancement : seuls les cachés se révèlent) */
 function evaluateAchv(mode) {
   const m = achMetrics(), today = localToday(), found = [];
   for (const b of BADGES) {
-    const v = b.value(m), reached = b.tiers.filter(t => v >= t).length, have = db.achv[b.id] ? [...db.achv[b.id]] : [null, null, null];
+    const v = b.value(m), have = { ...(db.achv[b.id] || {}) };
     let changed = false;
-    for (let k = 0; k < reached; k++) if (!have[k]) {
-      const loud = mode === "live" || (mode === "seed" && b.hidden);
-      have[k] = loud ? today : "-"; changed = true; found.push({ b, k, loud });
-    }
+    b.tiers.forEach((t, k) => {
+      if (v >= t && !have[t]) {
+        const loud = mode === "live" || (mode === "seed" && b.hidden);
+        have[t] = loud ? today : "-"; changed = true; found.push({ b, k, loud });
+      }
+    });
     if (changed) db.achv[b.id] = have;
   }
   if (found.length) { saveSoon(); scheduleSync(); if (views.achv) views.achv.dirty = true; scheduleRender(); }
@@ -1779,14 +1807,14 @@ const achUnseen = () => Math.max(0, achTotals().all - (db.prefs.achvSeen ?? achT
 const ACH = { filter: "all" };
 const medal = t => `<svg viewBox="0 0 40 40" class="medal m${t}" aria-hidden="true"><path class="rib" d="M12 2h16l-3.5 13h-9z"/><circle class="disc" cx="20" cy="26" r="11"/><path class="star" d="M20 19.5l2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7z"/></svg>`;
 function tieredCard(b) {
-  const s = badgeState(b, achMetrics.cache), done = s.n === b.tiers.length;
+  const s = badgeState(b, achMetrics.cache), done = s.idx < 0;
   const pct = done ? 100 : Math.min(100, Math.round(s.v / s.next * 100));
-  const lines = b.tiers.map((t, i) => `<li class="${s.have[i] ? "on" : ""}"><b>${TIER_NAMES[i]}</b><span>${esc(b.desc(t))}</span><em>${s.have[i] ? esc(dateLabel(s.have[i])) : ""}</em></li>`).join("");
-  const dots = b.tiers.map((_, i) => `<i class="td d${i + 1}${s.have[i] ? " on" : ""}"></i>`).join("");
-  return `<details class="ach m${s.n}${done ? " done" : ""}"><summary>${medal(s.n)}<div class="ach-body"><h4>${esc(b.name)}</h4><p>${done ? "Tous les paliers obtenus" : esc("Prochain palier : " + b.desc(s.next))}</p>${done ? "" : `<div class="bar"><i style="width:${pct}%"></i></div><small>${Math.min(s.v, s.next)} / ${s.next}</small>`}</div><span class="ach-tiers">${dots}</span></summary><ul class="ach-lines">${lines}</ul></details>`;
+  const lines = b.tiers.map((t, i) => `<li class="${s.earned[i] ? "on" : ""}"><b>${TIER_NAMES[i]}</b><span>${esc(b.desc(t))}</span><em>${s.earned[i] ? esc(dateLabel(s.have[t])) : ""}</em></li>`).join("");
+  const dots = b.tiers.map((_, i) => `<i class="td d${i + 1}${s.earned[i] ? " on" : ""}"></i>`).join("");
+  return `<details class="ach m${s.n}${done ? " done" : ""}"><summary>${medal(s.n)}<div class="ach-body"><h4>${esc(b.name)}</h4><p>${done ? "Tous les paliers obtenus" : esc(`${TIER_NAMES[s.idx]} : ${b.desc(s.next)}`)}</p>${done ? "" : `<div class="bar"><i style="width:${pct}%"></i></div><small>${Math.min(s.v, s.next)} / ${s.next}, palier ${s.n + 1} sur ${b.tiers.length}</small>`}</div><span class="ach-tiers">${dots}</span></summary><ul class="ach-lines">${lines}</ul></details>`;
 }
 function secretCard(b) {
-  const d = (db.achv[b.id] || [])[0];
+  const d = (db.achv[b.id] || {})["1"];
   if (!d) return `<div class="ach secret locked"><svg viewBox="0 0 40 40" class="medal m0" aria-hidden="true"><circle class="disc" cx="20" cy="22" r="13"/><text x="20" y="28" text-anchor="middle" font-size="18" font-weight="800" fill="currentColor">?</text></svg><div class="ach-body"><h4>Succès caché</h4><p class="cryptic">${esc(b.hint)}</p></div></div>`;
   return `<div class="ach secret found"><svg viewBox="0 0 40 40" class="medal mH" aria-hidden="true"><circle class="disc" cx="20" cy="22" r="13"/><path class="star" d="M20 12l2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8-4.3-4.1 5.9-.9z"/></svg><div class="ach-body"><h4>${esc(b.name)}</h4><p>${esc(b.desc())}</p><small>${esc(dateLabel(d))}</small></div></div>`;
 }
@@ -1799,15 +1827,15 @@ function renderAchv() {
   $$("#avFilter button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.f === ACH.filter)));
   const keep = b => {
     const s = badgeState(b, m);
-    if (ACH.filter === "doing") return s.n < b.tiers.length && s.v > 0;
+    if (ACH.filter === "doing") return s.idx >= 0 && s.v > 0;
     if (ACH.filter === "done") return s.n > 0;
     return true;
   };
   const section = (title, cards, open, extra = "") => cards.length ? `<details class="achsec"${open ? " open" : ""}><summary>${title}<span>${extra}</span></summary><div class="achgrid">${cards.join("")}</div></details>` : "";
   const by = c => tiered_.filter(b => b.cat === c && keep(b));
-  const near = tiered_.map(b => ({ b, s: badgeState(b, m) })).filter(x => x.s.n < x.b.tiers.length && x.s.v > 0).sort((a, b) => b.s.v / b.s.next - a.s.v / a.s.next).slice(0, 6).map(x => tieredCard(x.b));
+  const near = tiered_.map(b => ({ b, s: badgeState(b, m) })).filter(x => x.s.idx >= 0 && x.s.v > 0).sort((a, b) => b.s.v / b.s.next - a.s.v / a.s.next).slice(0, 6).map(x => tieredCard(x.b));
   const hidden = BADGES.filter(b => b.hidden);
-  const shownHidden = ACH.filter === "all" ? hidden : hidden.filter(b => (db.achv[b.id] || [])[0] && ACH.filter === "done");
+  const shownHidden = ACH.filter === "all" ? hidden : hidden.filter(b => (db.achv[b.id] || {})["1"] && ACH.filter === "done");
   $("#avBody").innerHTML =
     (ACH.filter === "all" ? section("Les plus proches", near, true) : "") +
     section("Collection et séries", [...by("col"), ...by("series")].map(tieredCard), true) +
