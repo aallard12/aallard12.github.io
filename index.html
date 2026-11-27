@@ -325,6 +325,24 @@
     </div>
   </header>
 
+  <!-- À placer juste avant <main class="container"> -->
+  <section class="container" id="loginGate">
+    <div class="panel">
+      <h1>Connexion</h1>
+      <p>Accès direct à tes applications.</p>
+      <form id="loginForm">
+        <label for="loginUser">Identifiant</label>
+        <input id="loginUser" type="text" autocomplete="username" required />
+
+        <label for="loginPass">Mot de passe</label>
+        <input id="loginPass" type="password" autocomplete="current-password" required />
+
+        <button type="submit">Se connecter</button>
+        <p id="loginError" role="alert" hidden>Identifiant ou mot de passe incorrect.</p>
+      </form>
+    </div>
+  </section>
+
   <!-- Contenu principal -->
   <main class="container">
     <div class="intro">
@@ -382,3 +400,36 @@
 
 </body>
 </html>
+
+<script>
+(() => {
+  const AUTH_USER = "toto";
+  const AUTH_PASS = "toto";
+  const SESSION_KEY = "apphub_auth_ok";
+
+  const gate = document.getElementById("loginGate");
+  const appMain = document.querySelector("main.container");
+  const form = document.getElementById("loginForm");
+  const errEl = document.getElementById("loginError");
+
+  function setUnlocked(unlocked) {
+    gate.hidden = unlocked;
+    appMain.hidden = !unlocked;
+  }
+
+  setUnlocked(sessionStorage.getItem(SESSION_KEY) === "1");
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const u = document.getElementById("loginUser").value.trim();
+    const p = document.getElementById("loginPass").value;
+    if (u === AUTH_USER && p === AUTH_PASS) {
+      sessionStorage.setItem(SESSION_KEY, "1");
+      errEl.hidden = true;
+      setUnlocked(true);
+    } else {
+      errEl.hidden = false;
+    }
+  });
+})();
+</script>
