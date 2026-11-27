@@ -8,7 +8,7 @@
   <script>
     // Garde-fou : renvoie vers la page de connexion si la session n'est pas validée
     if (sessionStorage.getItem("apphub_auth_ok") !== "1") {
-      window.location.replace("./index.html");
+      window.location.replace("./login.html");
     }
   </script>
   <style>
@@ -325,11 +325,10 @@
     <div class="topbar-inner">
       <div class="brand">
         <span class="brand-dot" aria-hidden="true"></span>
-        <span>Hub · Antoine</span>
+        <span>AppHub</span>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <span class="domain-pill">aallard12.github.io</span>
-        <button type="button" onclick="sessionStorage.removeItem('apphub_auth_ok');window.location.replace('./index.html');" style="border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.1);color:#fff;font:inherit;font-size:0.78rem;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;">Déconnexion</button>
+        <button type="button" onclick="sessionStorage.removeItem('apphub_auth_ok');window.location.replace('./login.html');" style="border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.1);color:#fff;font:inherit;font-size:0.78rem;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;">Déconnexion</button>
       </div>
     </div>
   </header>
