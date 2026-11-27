@@ -153,6 +153,15 @@
           </div>
         </div>
 
+        <!-- Sélecteur d'émojis intégré par thèmes -->
+        <div class="rounded-2xl bg-zinc-950/90 border border-zinc-800/90 p-3 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Choisir une icône</span>
+            <div id="emoji-theme-tabs" class="flex items-center gap-1 overflow-x-auto"></div>
+          </div>
+          <div id="emoji-grid" class="grid grid-cols-8 gap-1.5 max-h-32 overflow-y-auto pr-0.5"></div>
+        </div>
+
         <!-- Optionnel à la création : premier palier actif -->
         <div id="initial-milestone-block" class="pt-3 border-t border-zinc-800/80 space-y-3">
           <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400">Premier palier actif (optionnel)</label>
@@ -193,6 +202,7 @@
       <form id="milestone-form" onsubmit="saveMilestone(event)" class="space-y-4">
         <input type="hidden" id="ms-cat-id" value="" />
         <input type="hidden" id="ms-mode" value="queue" />
+        <input type="hidden" id="ms-item-id" value="" />
 
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">Intitulé du palier</label>
@@ -319,6 +329,67 @@
         badge: 'bg-orange-500/15 text-orange-400',
         btn: 'bg-orange-500 hover:bg-orange-400 text-zinc-950',
       },
+      cyan: {
+        name: 'Cyan',
+        dot: 'bg-cyan-500',
+        border: 'border-cyan-500/30',
+        badge: 'bg-cyan-500/15 text-cyan-400',
+        btn: 'bg-cyan-500 hover:bg-cyan-400 text-zinc-950',
+      },
+      indigo: {
+        name: 'Indigo',
+        dot: 'bg-indigo-500',
+        border: 'border-indigo-500/30',
+        badge: 'bg-indigo-500/15 text-indigo-400',
+        btn: 'bg-indigo-500 hover:bg-indigo-400 text-zinc-950',
+      },
+      lime: {
+        name: 'Citron vert',
+        dot: 'bg-lime-500',
+        border: 'border-lime-500/30',
+        badge: 'bg-lime-500/15 text-lime-400',
+        btn: 'bg-lime-500 hover:bg-lime-400 text-zinc-950',
+      },
+      fuchsia: {
+        name: 'Fuchsia',
+        dot: 'bg-fuchsia-500',
+        border: 'border-fuchsia-500/30',
+        badge: 'bg-fuchsia-500/15 text-fuchsia-400',
+        btn: 'bg-fuchsia-500 hover:bg-fuchsia-400 text-zinc-950',
+      },
+      teal: {
+        name: 'Sarcelle',
+        dot: 'bg-teal-500',
+        border: 'border-teal-500/30',
+        badge: 'bg-teal-500/15 text-teal-400',
+        btn: 'bg-teal-500 hover:bg-teal-400 text-zinc-950',
+      },
+      red: {
+        name: 'Rubis',
+        dot: 'bg-red-500',
+        border: 'border-red-500/30',
+        badge: 'bg-red-500/15 text-red-400',
+        btn: 'bg-red-500 hover:bg-red-400 text-zinc-950',
+      },
+    };
+
+    const EMOJI_THEMES = {
+      sport: {
+        label: 'Sport & Course',
+        emojis: ['🏃‍♂️', '🏃‍♀️', '🏓', '🏋️', '🚴', '🏊', '⚽', '🏀', '🎾', '🥊', '🧗', '🤸', '🏅', '🥇', '⏱️', '💪'],
+      },
+      gaming: {
+        label: 'Gaming & Tech',
+        emojis: ['🎮', '🕹️', '💻', '⌨️', '🖥️', '📱', '👾', '🏆', '⚡', '🤖', '🎧', '🛠️', '📡', '🔥', '🚀', '💾'],
+      },
+      goals: {
+        label: 'Objectifs & Projets',
+        emojis: ['🎯', '📌', '📈', '📚', '✍️', '🧠', '💡', '🗓️', '✅', '🏁', '💎', '🧭', '🛡️', '🎓', '🗂️', '🧩'],
+      },
+      nature: {
+        label: 'Nature & Divers',
+        emojis: ['⛏️', '🌲', '⛰️', '🌊', '☀️', '🌙', '🌱', '🦊', '🐉', '☕', '🎸', '🎨', '🧳', '🏡', '✨', '🌟'],
+      },
     };
 
     function getDefaultData() {
@@ -421,6 +492,7 @@
 
     let categories = [];
     let selectedColor = 'emerald';
+    let selectedEmojiTheme = 'sport';
     let resetConfirmArmed = false;
 
     // =========================================================================
@@ -557,6 +629,9 @@
                   ${item.note ? `<p class="text-[11px] text-zinc-500 truncate pl-5">${escapeHTML(item.note)}</p>` : ''}
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
+                  <button onclick="openMilestoneModal('${cat.id}', 'edit-queue', '${item.id}')" title="Modifier ce palier" class="px-2 py-1 rounded-lg text-[11px] font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 transition">
+                    Modifier
+                  </button>
                   ${
                     idx > 0
                       ? `<button onclick="moveQueueItem('${cat.id}', ${idx}, -1)" title="Monter dans la file" class="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800">
@@ -866,6 +941,114 @@
       setTimeout(() => nameInput.focus(), 50);
     }
 
+    function selectCategoryColor(colorKey) {
+      selectedColor = colorKey;
+      renderColorPicker();
+    }
+
+    function renderEmojiPicker() {
+      const tabsEl = document.getElementById('emoji-theme-tabs');
+      const gridEl = document.getElementById('emoji-grid');
+      const currentEmoji = document.getElementById('cat-emoji').value.trim();
+
+      tabsEl.innerHTML = Object.entries(EMOJI_THEMES)
+        .map(([key, theme]) => {
+          const isActive = selectedEmojiTheme === key;
+          const shortLabel = theme.label.split(' ')[0];
+          return `
+            <button
+              type="button"
+              onclick="selectEmojiTheme('${key}')"
+              title="${escapeHTML(theme.label)}"
+              class="px-2 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap transition ${
+                isActive
+                  ? 'bg-zinc-800 text-zinc-100 border border-zinc-700'
+                  : 'text-zinc-500 hover:text-zinc-300'
+              }"
+            >
+              ${escapeHTML(shortLabel)}
+            </button>
+          `;
+        })
+        .join('');
+
+      const activeTheme = EMOJI_THEMES[selectedEmojiTheme] || EMOJI_THEMES.sport;
+      gridEl.innerHTML = activeTheme.emojis
+        .map((em) => {
+          const isSelected = currentEmoji === em;
+          return `
+            <button
+              type="button"
+              onclick="selectEmoji('${em}')"
+              class="h-8 rounded-lg flex items-center justify-center text-base transition ${
+                isSelected
+                  ? 'bg-emerald-500/20 ring-1 ring-emerald-400 scale-105'
+                  : 'hover:bg-zinc-800/90 active:scale-95'
+              }"
+              title="Choisir ${escapeHTML(em)}"
+            >
+              ${escapeHTML(em)}
+            </button>
+          `;
+        })
+        .join('');
+    }
+
+    function selectEmojiTheme(themeKey) {
+      if (!EMOJI_THEMES[themeKey]) return;
+      selectedEmojiTheme = themeKey;
+      renderEmojiPicker();
+    }
+
+    function selectEmoji(emojiChar) {
+      const emojiInput = document.getElementById('cat-emoji');
+      emojiInput.value = emojiChar;
+      renderEmojiPicker();
+    }
+
+    function openCategoryModal(editCatId = null) {
+      const modal = document.getElementById('category-modal');
+      const titleEl = document.getElementById('cat-modal-title');
+      const editInput = document.getElementById('cat-edit-id');
+      const nameInput = document.getElementById('cat-name');
+      const emojiInput = document.getElementById('cat-emoji');
+      const initBlock = document.getElementById('initial-milestone-block');
+      const deleteBtn = document.getElementById('btn-delete-cat');
+
+      if (editCatId) {
+        const cat = categories.find((c) => c.id === editCatId);
+        if (!cat) return;
+        titleEl.textContent = 'Modifier la catégorie';
+        editInput.value = cat.id;
+        nameInput.value = cat.name;
+        emojiInput.value = cat.emoji;
+        selectedColor = cat.color && ACCENT_COLORS[cat.color] ? cat.color : 'emerald';
+        initBlock.classList.add('hidden');
+        deleteBtn.classList.remove('hidden');
+      } else {
+        titleEl.textContent = 'Nouvelle catégorie';
+        editInput.value = '';
+        nameInput.value = '';
+        emojiInput.value = '🎯';
+        document.getElementById('cat-first-title').value = '';
+        document.getElementById('cat-first-note').value = '';
+        selectedColor = 'emerald';
+        selectedEmojiTheme = 'goals';
+        initBlock.classList.remove('hidden');
+        deleteBtn.classList.add('hidden');
+      }
+
+      renderColorPicker();
+      renderEmojiPicker();
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => nameInput.focus(), 50);
+    }
+
+    document.getElementById('cat-emoji').addEventListener('input', () => {
+      renderEmojiPicker();
+    });
+
     function closeCategoryModal() {
       const modal = document.getElementById('category-modal');
       modal.classList.add('hidden');
@@ -993,6 +1176,98 @@
         showToast('🎯', 'Palier actif enregistré');
       } else {
         cat.queue.push(milestoneObj);
+        showToast('📥', 'Ajouté à la file d’attente');
+      }
+
+      saveState();
+      renderAll();
+      closeMilestoneModal();
+    }
+
+    function openMilestoneModal(catId, mode = 'queue', itemId = null) {
+      const cat = categories.find((c) => c.id === catId);
+      if (!cat) return;
+
+      document.getElementById('ms-cat-id').value = catId;
+      document.getElementById('ms-mode').value = mode;
+      document.getElementById('ms-item-id').value = itemId || '';
+
+      const badge = document.getElementById('ms-modal-badge');
+      const title = document.getElementById('ms-modal-title');
+      const titleInput = document.getElementById('ms-title');
+      const noteInput = document.getElementById('ms-note');
+
+      if (mode === 'edit-active' && cat.active) {
+        badge.textContent = `${cat.emoji} ${cat.name}`;
+        title.textContent = 'Modifier le palier actif';
+        titleInput.value = cat.active.title;
+        noteInput.value = cat.active.note || '';
+      } else if (mode === 'edit-queue' && itemId) {
+        const queuedItem = cat.queue.find((item) => item.id === itemId);
+        if (!queuedItem) return;
+        badge.textContent = `${cat.emoji} ${cat.name} · File d'attente`;
+        title.textContent = 'Modifier le palier en attente';
+        titleInput.value = queuedItem.title;
+        noteInput.value = queuedItem.note || '';
+      } else if (mode === 'active' || !cat.active) {
+        document.getElementById('ms-mode').value = 'active';
+        document.getElementById('ms-item-id').value = '';
+        badge.textContent = `${cat.emoji} ${cat.name} · Palier actif`;
+        title.textContent = 'Définir le palier actif';
+        titleInput.value = '';
+        noteInput.value = '';
+      } else {
+        document.getElementById('ms-mode').value = 'queue';
+        document.getElementById('ms-item-id').value = '';
+        badge.textContent = `${cat.emoji} ${cat.name} · File d'attente`;
+        title.textContent = 'Ajouter un palier suivant';
+        titleInput.value = '';
+        noteInput.value = '';
+      }
+
+      const modal = document.getElementById('milestone-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => titleInput.focus(), 50);
+    }
+
+    function closeMilestoneModal() {
+      const modal = document.getElementById('milestone-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function saveMilestone(e) {
+      e.preventDefault();
+      const catId = document.getElementById('ms-cat-id').value;
+      const mode = document.getElementById('ms-mode').value;
+      const itemId = document.getElementById('ms-item-id').value;
+      const title = document.getElementById('ms-title').value.trim();
+      const note = document.getElementById('ms-note').value.trim();
+
+      const cat = categories.find((c) => c.id === catId);
+      if (!cat || !title) return;
+
+      if (mode === 'edit-queue' && itemId) {
+        const queuedItem = cat.queue.find((item) => item.id === itemId);
+        if (queuedItem) {
+          queuedItem.title = title;
+          queuedItem.note = note;
+          showToast('✏️', 'Palier en attente mis à jour');
+        }
+      } else if (mode === 'edit-active' || mode === 'active' || !cat.active) {
+        cat.active = {
+          id: mode === 'edit-active' && cat.active ? cat.active.id : 'ms-' + Date.now(),
+          title,
+          note,
+        };
+        showToast('🎯', 'Palier actif enregistré');
+      } else {
+        cat.queue.push({
+          id: 'ms-' + Date.now(),
+          title,
+          note,
+        });
         showToast('📥', 'Ajouté à la file d’attente');
       }
 
