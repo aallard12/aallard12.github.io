@@ -55,11 +55,18 @@ h1, h2, h3, h4, p { margin: 0; }
 .tabs button svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
 .tabs button:hover { background: rgba(255, 255, 255, .1); color: #fff; }
 .tabs button[aria-selected="true"] { color: #fff; background: rgba(255, 255, 255, .16); box-shadow: inset 0 -3px 0 var(--gold-bg); }
-.pills { margin-left: auto; display: flex; gap: 8px; }
+.pills { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .pill { background: rgba(255, 255, 255, .14); color: #fff; border-radius: 999px; padding: 4px 12px; font-weight: 800; font-variant-numeric: tabular-nums; font-size: .92rem; }
 .pill.gold { background: var(--gold-bg); color: var(--gold-text); }
+.btn-menu { display: inline-flex; align-items: center; gap: 6px; background: rgba(255, 255, 255, .14); color: #fff; text-decoration: none; border-radius: 999px; padding: 5px 13px; font-weight: 800; font-size: .88rem; white-space: nowrap; transition: background .15s, transform .1s; }
+.btn-menu svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.3; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.btn-menu:hover { background: rgba(255, 255, 255, .24); }
+.btn-menu:active { transform: scale(.97); }
 @media (max-width: 720px) {
   .top { gap: 10px; padding-left: 14px; padding-right: 14px; }
+  .pills { gap: 6px; }
+  .pill { padding: 4px 9px; font-size: .84rem; }
+  .btn-menu { padding: 5px 10px; font-size: .8rem; gap: 4px; }
   .tabs { position: fixed; left: 0; right: 0; bottom: 0; margin: 0; gap: 0; background: var(--navy); border-top: 1px solid rgba(255, 255, 255, .15); padding: 4px 6px calc(4px + env(safe-area-inset-bottom)); }
   .tabs button { flex: 1; flex-direction: column; gap: 2px; padding: 7px 4px; font-size: .74rem; border-radius: 10px; }
   .tabs button[aria-selected="true"] { box-shadow: inset 0 3px 0 var(--gold-bg); }
@@ -345,6 +352,7 @@ button, summary, select { touch-action: manipulation; }
   <div class="pills" aria-live="polite">
     <span class="pill gold" id="pillShiny" title="Pokémon différents obtenus en shiny"></span>
     <span class="pill" id="pillCards" title="Pokémon avec au moins une carte"></span>
+    <a class="btn-menu" href="../index.html" title="Retour au menu principal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span>Retour au menu</span></a>
   </div>
 </header>
 
