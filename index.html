@@ -4,7 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#141c3a" />
-  <title>Le AppHub</title>
+  <title>AppHub</title>
+  <script>
+    // Garde-fou : renvoie vers la page de connexion si la session n'est pas validée
+    if (sessionStorage.getItem("apphub_auth_ok") !== "1") {
+      window.location.replace("./index.html");
+    }
+  </script>
   <style>
     /* =========================================================================
        VARIABLES & THÈME (Assortis à Pokéhub : clair & sombre automatique)
@@ -321,27 +327,12 @@
         <span class="brand-dot" aria-hidden="true"></span>
         <span>Hub · Antoine</span>
       </div>
-      <span class="domain-pill">aallard12.github.io</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="domain-pill">aallard12.github.io</span>
+        <button type="button" onclick="sessionStorage.removeItem('apphub_auth_ok');window.location.replace('./index.html');" style="border:1px solid rgba(255,255,255,0.22);background:rgba(255,255,255,0.1);color:#fff;font:inherit;font-size:0.78rem;font-weight:700;padding:4px 10px;border-radius:999px;cursor:pointer;">Déconnexion</button>
+      </div>
     </div>
   </header>
-
-  <!-- À placer juste avant <main class="container"> -->
-  <section class="container" id="loginGate">
-    <div class="panel">
-      <h1>Connexion</h1>
-      <p>Accès direct à tes applications.</p>
-      <form id="loginForm">
-        <label for="loginUser">Identifiant</label>
-        <input id="loginUser" type="text" autocomplete="username" required />
-
-        <label for="loginPass">Mot de passe</label>
-        <input id="loginPass" type="password" autocomplete="current-password" required />
-
-        <button type="submit">Se connecter</button>
-        <p id="loginError" role="alert" hidden>Identifiant ou mot de passe incorrect.</p>
-      </form>
-    </div>
-  </section>
 
   <!-- Contenu principal -->
   <main class="container">
@@ -400,36 +391,3 @@
 
 </body>
 </html>
-
-<script>
-(() => {
-  const AUTH_USER = "toto";
-  const AUTH_PASS = "toto";
-  const SESSION_KEY = "apphub_auth_ok";
-
-  const gate = document.getElementById("loginGate");
-  const appMain = document.querySelector("main.container");
-  const form = document.getElementById("loginForm");
-  const errEl = document.getElementById("loginError");
-
-  function setUnlocked(unlocked) {
-    gate.hidden = unlocked;
-    appMain.hidden = !unlocked;
-  }
-
-  setUnlocked(sessionStorage.getItem(SESSION_KEY) === "1");
-
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const u = document.getElementById("loginUser").value.trim();
-    const p = document.getElementById("loginPass").value;
-    if (u === AUTH_USER && p === AUTH_PASS) {
-      sessionStorage.setItem(SESSION_KEY, "1");
-      errEl.hidden = true;
-      setUnlocked(true);
-    } else {
-      errEl.hidden = false;
-    }
-  });
-})();
-</script>
