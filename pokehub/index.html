@@ -8,9 +8,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pokéhub">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="../manifest.webmanifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
 <title>Pokéhub</title>
 <style>
 :root {
@@ -1950,15 +1951,20 @@ function initApp() {
   const h = location.hash.slice(1);
   show(TABS.includes(h) ? h : "wheel");
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
-  if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
-    navigator.serviceWorker.register("sw.js").then(reg => reg.addEventListener("updatefound", () => {
-      const nw = reg.installing;
-      if (nw) nw.addEventListener("statechange", () => { if (nw.state === "installed" && navigator.serviceWorker.controller) toast("Une nouvelle version est prête.", () => location.reload(), "Recharger"); });
-    })).catch(() => {});
-  }
+  // if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+  //   navigator.serviceWorker.register("sw.js").then(reg => reg.addEventListener("updatefound", () => {
+  //     const nw = reg.installing;
+  //     if (nw) nw.addEventListener("statechange", () => { if (nw.state === "installed" && navigator.serviceWorker.controller) toast("Une nouvelle version est prête.", () => location.reload(), "Recharger"); });
+  //   })).catch(() => {});
+  // }
 }
 initApp();
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('../sw.js');
+  });
+}
 </script>
 </body>
 </html>
